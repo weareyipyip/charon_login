@@ -20,7 +20,8 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
     stage_keys = get_flow(module_config, flow_key)
 
     with user_identifier when not is_nil(user_identifier) <-
-           Map.get(conn.body_params, "user_identifier") do
+           Map.get(conn.body_params, "user_identifier"),
+         user <- module_config.fetch_user.(user_identifier) do
       token =
         create_token(config, %{
           flow_key: flow_key,
@@ -40,9 +41,9 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
           %{key: stage_key, challenges: challenges}
         end)
 
-      send_json(conn, %{stages: stages, token: token})
+      send_json(conn, %{stages: stages, enabled_challenges: user.enabled_challenges, token: token})
     else
-      nil -> send_json(conn, %{error: :invalid_user_identifier}, 400)
+      nil -> send_json(conn, %{error: :invalid_user}, 400)
     end
   end
 end

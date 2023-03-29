@@ -34,6 +34,7 @@ defmodule CharonLogin.Config do
     - `key` (required) Can be used to reference the flow from the client.
     - `value` (required) List of required stages in the flow.
   - `:success_callback` (required) Called with the flow name and user identifier when a flow has been completed successfully.
+  - `:fetch_user` (required) Called with the user identifier to fetch user information.
   """
 
   @enforce_keys [:stages, :flows]
@@ -42,19 +43,22 @@ defmodule CharonLogin.Config do
     :challenges,
     :stages,
     :flows,
-    :success_callback
+    :success_callback,
+    :fetch_user
   ]
 
   @type challenges :: %{atom() => [{module(), map()}]}
   @type stages :: %{atom() => [atom()]}
   @type flows :: %{atom() => [atom()]}
   @type success_callback :: (atom(), String.t() -> map())
+  @type fetch_user :: (String.t() -> %{enabled_challenges: [atom()]} | nil)
 
   @type t :: %__MODULE__{
           challenges: challenges(),
           stages: stages(),
           flows: flows(),
-          success_callback: success_callback()
+          success_callback: success_callback(),
+          fetch_user: fetch_user()
         }
 
   @doc """
