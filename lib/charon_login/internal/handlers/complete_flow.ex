@@ -15,10 +15,9 @@ defmodule CharonLogin.Internal.Handlers.CompleteFlow do
   def handle(config, conn) do
     module_config = Internal.get_module_config(config)
 
-    with {:ok, %{flow_key: flow_key, incomplete_stages: incomplete_stages}} <-
-           fetch_token(config, conn),
-         :all_stages_completed <- check_stages(incomplete_stages) do
-      module_config.success_callback(conn, flow_key)
+    with {:ok, token_payload} <- fetch_token(config, conn),
+         :all_stages_completed <- check_stages(token_payload.incomplete_stages) do
+      module_config.success_callback(token_payload.flow_key, token_payload.user_identifier)
     else
       {:error, :invalid_authorization} -> send_json(conn, %{error: :invalid_authorization}, 400)
       :incomplete_stages -> send_json(conn, %{error: :incomplete_stages}, 400)

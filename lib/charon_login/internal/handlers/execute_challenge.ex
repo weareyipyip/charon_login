@@ -15,15 +15,14 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
   def handle(config, conn, stage_key, challenge_key) do
     module_config = Internal.get_module_config(config)
 
-    with {:ok, token_payload = %{incomplete_stages: incomplete_stages}} <-
-           fetch_token(config, conn),
-         :is_current_stage <- check_stage(incomplete_stages, stage_key),
+    with {:ok, token_payload} <- fetch_token(config, conn),
+         :is_current_stage <- check_stage(token_payload.incomplete_stages, stage_key),
          :is_valid_challenge <- check_challenge(module_config, stage_key, challenge_key) do
       {challenge, opts} = get_challenge(module_config, challenge_key)
 
       case challenge.execute(opts, conn) do
         {:ok, :completed} ->
-          incomplete_stages = complete_current_stage(incomplete_stages)
+          incomplete_stages = complete_current_stage(token_payload.incomplete_stages)
 
           send_json(conn, %{
             token: create_token(config, %{token_payload | incomplete_stages: incomplete_stages})
