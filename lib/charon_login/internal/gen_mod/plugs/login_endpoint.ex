@@ -1,13 +1,6 @@
 defmodule CharonLogin.Internal.GenMod.Plugs.LoginEndpoint do
   @moduledoc false
 
-  defp gen_key_map(map) do
-    map
-    |> Map.keys()
-    |> Enum.map(&{Atom.to_string(&1), &1})
-    |> Enum.into(%{})
-  end
-
   def generate(config) do
     module_config = CharonLogin.Internal.get_module_config(config)
 
@@ -62,30 +55,25 @@ defmodule CharonLogin.Internal.GenMod.Plugs.LoginEndpoint do
         NotFound.handle(conn)
       end
 
-      defp parse_flow_key(flow_key) do
-        unquote(module_config.flows |> gen_key_map() |> Macro.escape())
-        |> Map.get(flow_key)
-        |> case do
-          nil -> {:error, :flow_not_found}
-          flow_key -> {:ok, flow_key}
-        end
-      end
+      unquote(generate_parse_key(module_config.flows, :flow))
+      unquote(generate_parse_key(module_config.stages, :stage))
+      unquote(generate_parse_key(module_config.challenges, :challenge))
+    end
+  end
 
-      defp parse_stage_key(stage_key) do
-        unquote(module_config.stages |> gen_key_map() |> Macro.escape())
-        |> Map.get(stage_key)
-        |> case do
-          nil -> {:error, :stage_not_found}
-          stage_key -> {:ok, stage_key}
-        end
-      end
+  defp generate_parse_key(map, type) do
+    string_to_atom_map =
+      Map.keys(map)
+      |> Enum.map(&{Atom.to_string(&1), &1})
+      |> Enum.into(%{})
 
-      defp parse_challenge_key(challenge_key) do
-        unquote(module_config.challenges |> gen_key_map() |> Macro.escape())
-        |> Map.get(challenge_key)
+    quote do
+      defp unquote(:"parse_#{type}_key")(key) do
+        unquote(string_to_atom_map |> Macro.escape())
+        |> Map.get(key)
         |> case do
-          nil -> {:error, :challenge_not_found}
-          challenge_key -> {:ok, challenge_key}
+          nil -> {:error, unquote(:"#{type}_not_found")}
+          parsed_key -> {:ok, parsed_key}
         end
       end
     end
