@@ -45,10 +45,14 @@ defmodule CharonLogin.Config do
     :success_callback
   ]
 
+  @type challenges :: %{atom() => [{module(), map()}]}
+  @type stages :: %{atom() => [atom()]}
+  @type flows :: %{atom() => [atom()]}
+
   @type t :: %__MODULE__{
-          challenges: %{atom() => [{module(), map()}]},
-          stages: %{atom() => [atom()]},
-          flows: %{atom() => [atom()]},
+          challenges: challenges(),
+          stages: stages(),
+          flows: flows(),
           success_callback: (Plug.Conn.t(), atom() -> Plug.Conn.t())
         }
 
