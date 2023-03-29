@@ -4,6 +4,8 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
 
   import Conn
 
+  @type token :: %{flow_key: atom(), user_identifier: String.t(), incomplete_stages: [atom()]}
+
   @doc """
   Get a list of required stages for the given flow key.
   """
@@ -25,12 +27,17 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Create a new progress token.
   """
-  @spec create_token(Charon.Config.t(), atom(), [atom()]) :: String.t()
-  def create_token(config, flow_key, incomplete_stages) do
+  @spec create_token(Charon.Config.t(), token()) :: String.t()
+  def create_token(config, %{
+        flow_key: flow_key,
+        user_identifier: user_identifier,
+        incomplete_stages: incomplete_stages
+      }) do
     {:ok, token} =
       config.token_factory_module.sign(
         %{
           "flow_key" => Atom.to_string(flow_key),
+          "user_identifier" => user_identifier,
           "incomplete_stages" => Enum.map(incomplete_stages, &Atom.to_string/1)
         },
         config
@@ -43,15 +50,19 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   Fetch and validate the progress token from the current request.
   """
   @spec fetch_token(Charon.Config.t(), Conn.t()) ::
-          {:ok, %{flow_key: atom(), incomplete_stages: [atom()]}}
-          | {:error, :invalid_authorization}
+          {:ok, token()} | {:error, :invalid_authorization}
   def fetch_token(config, conn) do
     with ["Bearer " <> token] <- get_req_header(conn, "authorization"),
-         {:ok, %{"flow_key" => flow_key, "incomplete_stages" => incomplete_stages}} <-
-           config.token_factory_module.verify(token, config) do
+         {:ok,
+          %{
+            "flow_key" => flow_key,
+            "user_identifier" => user_identifier,
+            "incomplete_stages" => incomplete_stages
+          }} <- config.token_factory_module.verify(token, config) do
       {:ok,
        %{
          flow_key: String.to_existing_atom(flow_key),
+         user_identifier: user_identifier,
          incomplete_stages: Enum.map(incomplete_stages, &String.to_existing_atom/1)
        }}
     else
