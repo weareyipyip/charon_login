@@ -14,7 +14,7 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
   @doc """
   Handle the request.
   """
-  @spec handle(Charon.Config.t(), Conn.t(), String.t()) :: Conn.t()
+  @spec handle(Charon.Config.t(), Conn.t(), atom()) :: Conn.t()
   def handle(config, conn, flow_key) do
     module_config = Internal.get_module_config(config)
 

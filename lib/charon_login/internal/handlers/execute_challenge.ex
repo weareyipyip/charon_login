@@ -11,7 +11,7 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
   @doc """
   Handle the request.
   """
-  @spec handle(Charon.Config.t(), Conn.t(), String.t(), String.t()) :: Conn.t()
+  @spec handle(Charon.Config.t(), Conn.t(), atom(), atom()) :: Conn.t()
   def handle(config, conn, stage_key, challenge_key) do
     module_config = Internal.get_module_config(config)
 
@@ -36,9 +36,9 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
           send_json(conn, %{error: error}, 500)
       end
     else
-      {:error, :invalid_authorization} -> send_json(conn, %{error: "invalid_authorization"}, 400)
-      :is_not_current_stage -> send_json(conn, %{error: "not_current_stage"}, 400)
-      :is_invalid_challenge -> send_json(conn, %{error: "invalid_challenge"}, 400)
+      {:error, :invalid_authorization} -> send_json(conn, %{error: :invalid_authorization}, 400)
+      :is_not_current_stage -> send_json(conn, %{error: :not_current_stage}, 400)
+      :is_invalid_challenge -> send_json(conn, %{error: :invalid_challenge}, 400)
     end
   end
 
@@ -52,9 +52,7 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
         :is_invalid_challenge
 
       challenge_keys ->
-        if String.to_existing_atom(challenge_key) in challenge_keys,
-          do: :is_valid_challenge,
-          else: :is_invalid_challenge
+        if challenge_key in challenge_keys, do: :is_valid_challenge, else: :is_invalid_challenge
     end
   rescue
     ArgumentError -> :is_invalid_challenge

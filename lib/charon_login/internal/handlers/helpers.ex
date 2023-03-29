@@ -7,37 +7,19 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Get a list of required stages for the given flow key.
   """
-  @spec get_flow(Config.t(), atom() | String.t()) :: [atom()] | nil
-  def get_flow(config, flow_key) when is_binary(flow_key) do
-    get_flow(config, String.to_existing_atom(flow_key))
-  rescue
-    ArgumentError -> nil
-  end
-
+  @spec get_flow(Config.t(), atom()) :: [atom()] | nil
   def get_flow(config, flow_key), do: Map.get(config.flows, flow_key)
 
   @doc """
   Get a list of available challenges for the given stage key.
   """
-  @spec get_stage(Config.t(), atom() | String.t()) :: [atom()] | nil
-  def get_stage(config, stage_key) when is_binary(stage_key) do
-    get_stage(config, String.to_existing_atom(stage_key))
-  rescue
-    ArgumentError -> nil
-  end
-
+  @spec get_stage(Config.t(), atom()) :: [atom()] | nil
   def get_stage(config, stage_key), do: Map.get(config.stages, stage_key)
 
   @doc """
   Get a challenge for the given challenge key.
   """
-  @spec get_challenge(Config.t(), atom() | String.t()) :: {module(), map()} | nil
-  def get_challenge(config, challenge_key) when is_binary(challenge_key) do
-    get_challenge(config, String.to_existing_atom(challenge_key))
-  rescue
-    ArgumentError -> nil
-  end
-
+  @spec get_challenge(Config.t(), atom()) :: {module(), map()} | nil
   def get_challenge(config, challenge_key), do: Map.get(config.challenges, challenge_key)
 
   @doc """
