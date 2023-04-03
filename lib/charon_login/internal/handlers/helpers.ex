@@ -68,8 +68,6 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
     else
       _ -> {:error, :invalid_authorization}
     end
-  rescue
-    ArgumentError -> {:error, :invalid_authorization}
   end
 
   @doc """

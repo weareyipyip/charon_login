@@ -3,7 +3,7 @@ defmodule CharonLogin.PasswordChallenge do
 
   def type(), do: :password
 
-  def execute(opts, conn) do
+  def execute(opts, user) do
     {:ok, :completed}
   end
 end

@@ -16,11 +16,12 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
     module_config = Internal.get_module_config(config)
 
     with {:ok, token_payload} <- fetch_token(config, conn),
-         :is_current_stage <- check_stage(token_payload.incomplete_stages, stage_key),
-         :is_valid_challenge <- check_challenge(module_config, stage_key, challenge_key) do
+         {:ok, :is_current_stage} <- check_stage(token_payload.incomplete_stages, stage_key),
+         {:ok, :is_valid_challenge} <- check_challenge(module_config, stage_key, challenge_key) do
+      user = module_config.fetch_user.(token_payload.user_identifier)
       {challenge, opts} = get_challenge(module_config, challenge_key)
 
-      case challenge.execute(opts, conn) do
+      case challenge.execute.(opts, user) do
         {:ok, :completed} ->
           incomplete_stages = complete_current_stage(token_payload.incomplete_stages)
 
@@ -37,26 +38,22 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
           send_json(conn, %{error: error}, 500)
       end
     else
-      {:error, :invalid_authorization} -> send_json(conn, %{error: :invalid_authorization}, 400)
-      :is_not_current_stage -> send_json(conn, %{error: :not_current_stage}, 400)
-      :is_invalid_challenge -> send_json(conn, %{error: :invalid_challenge}, 400)
+      {:error, error} when is_atom(error) -> send_json(conn, %{error: error}, 400)
     end
   end
 
   defp check_stage(incomplete_stages, stage_key) do
-    if hd(incomplete_stages) == stage_key, do: :is_current_stage, else: :is_not_current_stage
+    if hd(incomplete_stages) == stage_key,
+      do: {:ok, :is_current_stage},
+      else: {:error, :is_not_current_stage}
   end
 
   defp check_challenge(module_config, stage_key, challenge_key) do
-    case get_stage(module_config, stage_key) do
-      nil ->
-        :is_invalid_challenge
+    challenge_keys = get_stage(module_config, stage_key)
 
-      challenge_keys ->
-        if challenge_key in challenge_keys, do: :is_valid_challenge, else: :is_invalid_challenge
-    end
-  rescue
-    ArgumentError -> :is_invalid_challenge
+    if challenge_key in challenge_keys,
+      do: {:ok, :is_valid_challenge},
+      else: {:error, :is_invalid_challenge}
   end
 
   defp complete_current_stage([_current_stage | remaining_stages]), do: remaining_stages
