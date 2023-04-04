@@ -27,21 +27,25 @@ email or SMS. The email and SMS implementations are seperate challenges, wrapped
 otp stage.
 
 ```elixir
-CharonLogin => %{
-  challenges: %{
-    password: {CharonLogin.PasswordChallenge, %{}},
-    sms: {MyProject.SmsChallenge, %{}},
-    email: {MyProject.EmailChallenge, %{}}
-  },
-  stages: %{
-    stage_password: [:password],
-    stage_otp: [:sms, :email]
-  },
-  flows: %{
-    login_2fa: [:stage_password, :stage_otp]
-  },
-  success_callback: &MyProject.success_callback/2,
-  fetch_user: &MyProject.fetch_user/1
+config :my_project, :charon,
+  ...
+  optional_modules: %{
+    CharonLogin => %{
+      challenges: %{
+        password: {CharonLogin.PasswordChallenge, %{}},
+        sms: {MyProject.SmsChallenge, %{}},
+        email: {MyProject.EmailChallenge, %{}}
+      },
+      stages: %{
+        stage_password: [:password],
+        stage_otp: [:sms, :email]
+      },
+      flows: %{
+        login_2fa: [:stage_password, :stage_otp]
+      },
+      success_callback: &MyProject.success_callback/2,
+      fetch_user: &MyProject.fetch_user/1
+  }
 }
 ```
 
