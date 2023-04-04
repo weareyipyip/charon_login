@@ -60,9 +60,9 @@ flowchart LR
       pw_in[/User gives correct password/]
       or((or))
       sms_start[Send SMS]
-      sms_in[/User gives email OTP/]
-      email_start[Send SMS]
-      email_in[/User gives SMS OTP/]
+      sms_in[/User gives SMS OTP/]
+      email_start[Send email]
+      email_in[/User gives email OTP/]
       auth[Authenticate user]
 
       start --> pw_form
