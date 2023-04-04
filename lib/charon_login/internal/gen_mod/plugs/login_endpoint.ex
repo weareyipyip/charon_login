@@ -4,7 +4,7 @@ defmodule CharonLogin.Internal.GenMod.Plugs.LoginEndpoint do
   def generate(config) do
     module_config = CharonLogin.Internal.get_module_config(config)
 
-    quote generated: true do
+    quote generated: true, location: :keep do
       @moduledoc """
       ## Usage
 
