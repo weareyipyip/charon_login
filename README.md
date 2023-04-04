@@ -49,6 +49,38 @@ config :my_project, :charon,
 }
 ```
 
+```mermaid
+---
+title: 2FA flow
+---
+flowchart LR
+      start([Start])
+      stop([End])
+      pw_form[Send password form]
+      pw_in[/User gives correct password/]
+      or((or))
+      sms_start[Send SMS]
+      sms_in[/User gives email OTP/]
+      email_start[Send SMS]
+      email_in[/User gives SMS OTP/]
+      auth[Authenticate user]
+
+      start --> pw_form
+      subgraph stage_password
+      pw_form --> pw_in
+      end
+      subgraph stage_otp
+      pw_in --> or
+      or --> sms_start
+      or --> email_start
+      sms_start --> sms_in
+      email_start --> email_in
+      end
+      sms_in --> auth
+      email_in --> auth
+      auth --> stop
+```
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
