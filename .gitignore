@@ -24,3 +24,6 @@ charon_login-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Mac finder cache
+.DS_Store
