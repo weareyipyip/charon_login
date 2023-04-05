@@ -25,21 +25,25 @@ defmodule CharonLogin.Challenges.TOTP do
   def type(), do: :totp
 
   # TODO: blacklist keys that have already been used
-  @impl true
-  def execute(
-        %Plug.Conn{body_params: %{"otp" => password}} = _conn,
-        _opts,
-        %{totp_secret: secret} = _user
-      ) do
-    base_time = Elixir.System.os_time(:second)
+  if(Code.ensure_loaded?(NimbleTOTP)) do
+    @impl true
+    def execute(
+          %Plug.Conn{body_params: %{"otp" => password}} = _conn,
+          _opts,
+          %{totp_secret: secret} = _user
+        ) do
+      base_time = Elixir.System.os_time(:second)
 
-    if NimbleTOTP.valid?(secret, password, time: base_time) or
-         NimbleTOTP.valid?(secret, password, time: base_time - 30) do
-      {:ok, :completed}
-    else
-      {:error, :invalid_otp}
+      if NimbleTOTP.valid?(secret, password, time: base_time) or
+           NimbleTOTP.valid?(secret, password, time: base_time - 30) do
+        {:ok, :completed}
+      else
+        {:error, :invalid_otp}
+      end
     end
-  end
 
-  def execute(_, _, _), do: {:error, :invalid_args}
+    def execute(_, _, _), do: {:error, :invalid_args}
+  else
+    def execute(_, _, _), do: raise("TOTP challenge relies on NimbleTOTP dependency.")
+  end
 end

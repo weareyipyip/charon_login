@@ -15,7 +15,7 @@ defmodule CharonLogin.PasswordChallengeTest do
     end
 
     test "returns continue on incorrect password" do
-      assert {:ok, :continue} =
+      assert {:error, :incorrect_password} =
                Password.execute(
                  %Plug.Conn{body_params: %{"password" => "incorrect!"}},
                  @opts,
