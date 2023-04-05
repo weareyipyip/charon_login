@@ -23,11 +23,9 @@ defmodule CharonLogin.MixProject do
     [
       {:jason, "~> 1.4"},
       {:charon, ">= 2.0.0 and < 4.0.0"},
+      {:nimble_totp, "~> 1.0"},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:makeup_json, ">= 0.0.0", only: :dev, runtime: false}
-      # {:argon2_elixir, "~> 3.0"}
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
   end
 end
