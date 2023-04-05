@@ -9,7 +9,7 @@ action. A flow could check for email + password validation or a full multi-facto
 procedure.
 
 A flow consists of one or multiple **stages**. To complete a flow all stages in it need to be
-completed. The stages in a flow are ordered and neet to be fulfilled one at a time.
+completed. The stages in a flow are ordered and need to be fulfilled one at a time.
 
 A **challenge** represent a single authentication method. E.g. password validation or an OAuth
 token. Stages contain one or multiple challenges. Only one challenge needs to be fulfilled to
