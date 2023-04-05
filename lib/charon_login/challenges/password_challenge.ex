@@ -1,10 +1,22 @@
 defmodule CharonLogin.Challenges.Password do
   @moduledoc """
-  Verifies user password using given callback function.
-  json
-      {
-        "password": "correcthorsebatterystaple"
+  Verifies user password using given validate function.
+
+  Charon config:
+
+      CharonLogin %{
+        challenges: %{
+          challenge_name: {CharonLogin.Challenges.Password, %{validate: &MyValidator/2}}
+        }
       }
+
+  Request JSON body:
+
+  ```json
+  {
+    "password": "correcthorsebatterystaple"
+  }
+  ```
   """
   @behaviour CharonLogin.Challenge
 
@@ -13,7 +25,7 @@ defmodule CharonLogin.Challenges.Password do
 
   @impl true
   def execute(
-        %{body: %{"password" => password}} = _conn,
+        %Plug.Conn{body_params: %{"password" => password}} = _conn,
         %{validate: validate} = _opts,
         %{password: user_password} = _user
       ) do
