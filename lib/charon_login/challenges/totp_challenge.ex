@@ -1,6 +1,6 @@
 defmodule CharonLogin.Challenges.TOTP do
   @moduledoc """
-  Verifies a Timed One-Time Password using NimbleTOTP.
+  Verifies a Time-based One-Time Password using NimbleTOTP.
   Succeeds if given password is valid for this or the previous 30-second cycle.
 
   Charon config:
@@ -37,7 +37,7 @@ defmodule CharonLogin.Challenges.TOTP do
          NimbleTOTP.valid?(secret, password, time: base_time - 30) do
       {:ok, :completed}
     else
-      {:ok, :continue}
+      {:error, :invalid_otp}
     end
   end
 

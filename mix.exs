@@ -23,7 +23,7 @@ defmodule CharonLogin.MixProject do
     [
       {:jason, "~> 1.4"},
       {:charon, ">= 2.0.0 and < 4.0.0"},
-      {:nimble_totp, "~> 1.0"},
+      {:nimble_totp, "~> 1.0", optional: true},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:makeup_json, ">= 0.0.0", only: :dev, runtime: false}
     ]
