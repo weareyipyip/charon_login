@@ -33,7 +33,7 @@ defmodule CharonLogin.Challenges.Password do
       {:ok, :completed}
     else
       # incorrect password; continue challenge
-      {:ok, :continue}
+      {:error, :incorrect_password}
     end
   end
 
