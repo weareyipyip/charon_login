@@ -21,7 +21,7 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
       user = module_config.fetch_user.(token_payload.user_identifier)
       {challenge, opts} = get_challenge(module_config, challenge_key)
 
-      case challenge.execute.(opts, user) do
+      case challenge.execute.(conn, opts, user) do
         {:ok, :completed} ->
           incomplete_stages = complete_current_stage(token_payload.incomplete_stages)
 
