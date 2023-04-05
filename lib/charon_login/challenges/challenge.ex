@@ -14,5 +14,6 @@ defmodule CharonLogin.Challenge do
   The challenge should return `{:ok, :continue}` for each successful step while it is not fully completed.
   When the challenge has been fully completed, it should return `{:ok, :completed}`.
   """
-  @callback execute(map(), map()) :: {:ok, :continue | :completed} | {:error, atom()}
+  @callback execute(Plug.Conn.t(), map(), map()) ::
+              {:ok, :continue | :completed} | {:error, atom()}
 end
