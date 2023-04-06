@@ -18,7 +18,7 @@ defmodule CharonLogin.Config do
             flows: %{
               login: [:stage_a, :stage_b]
             },
-            success_callback: &MyApp.CharonLogin.login_successful/2
+            success_callback: &MyApp.CharonLogin.login_successful/3
           }
         }
       )
@@ -50,7 +50,7 @@ defmodule CharonLogin.Config do
   @type challenges :: %{atom() => [{module(), map()}]}
   @type stages :: %{atom() => [atom()]}
   @type flows :: %{atom() => [atom()]}
-  @type success_callback :: (atom(), String.t() -> map())
+  @type success_callback :: (Plug.Conn.t(), atom(), String.t() -> map())
   @type fetch_user :: (String.t() -> %{enabled_challenges: [atom()]} | nil)
 
   @type t :: %__MODULE__{

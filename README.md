@@ -43,7 +43,7 @@ config :my_project, :charon,
       flows: %{
         login_2fa: [:stage_password, :stage_otp]
       },
-      success_callback: &MyProject.success_callback/2,
+      success_callback: &MyProject.success_callback/3,
       fetch_user: &MyProject.fetch_user/1
   }
 }
@@ -63,7 +63,8 @@ flowchart LR
       sms_in[/User gives SMS OTP/]
       email_start[Send email]
       email_in[/User gives email OTP/]
-      auth[Authenticate user]
+      token[Generate auth token]
+      response[Send response]
 
       start --> pw_form
       subgraph stage_password
@@ -76,9 +77,12 @@ flowchart LR
       sms_start --> sms_in
       email_start --> email_in
       end
-      sms_in --> auth
-      email_in --> auth
-      auth --> stop
+      subgraph success_callback
+      sms_in --> token
+      email_in --> token
+      token --> response
+      end
+      response --> stop
 ```
 
 ## Installation
