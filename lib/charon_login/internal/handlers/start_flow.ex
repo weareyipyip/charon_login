@@ -34,7 +34,6 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
           challenges =
             Enum.map(get_stage(module_config, stage_key), fn challenge_key ->
               {challenge, _opts} = get_challenge(module_config, challenge_key)
-
               %{key: challenge_key, type: challenge.type()}
             end)
 

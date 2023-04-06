@@ -58,6 +58,10 @@ defmodule CharonLogin.Internal.GenMod.Plugs.LoginEndpoint do
       unquote(generate_parse_key(module_config.flows, :flow))
       unquote(generate_parse_key(module_config.stages, :stage))
       unquote(generate_parse_key(module_config.challenges, :challenge))
+
+      def get_config() do
+        @config
+      end
     end
   end
 

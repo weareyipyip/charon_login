@@ -2,6 +2,7 @@ defmodule CharonLogin.Challenges.TOTP do
   @moduledoc """
   Verifies a Time-based One-Time Password using NimbleTOTP.
   Succeeds if given password is valid for this or the previous 30-second cycle.
+  Passwords can only be used once.
 
   Charon config:
 
@@ -19,23 +20,30 @@ defmodule CharonLogin.Challenges.TOTP do
   }
   ```
   """
+  import CharonLogin.Internal.Handlers.Helpers
   @behaviour CharonLogin.Challenge
 
   @impl true
   def type(), do: :totp
 
-  # TODO: blacklist keys that have already been used
   if(Code.ensure_loaded?(NimbleTOTP)) do
     @impl true
     def execute(
           %Plug.Conn{body_params: %{"otp" => password}} = _conn,
           _opts,
-          %{totp_secret: secret} = _user
+          %{totp_secret: secret, id: user_id} = _user
         ) do
-      base_time = Elixir.System.os_time(:second)
+      now = Elixir.System.os_time(:second)
 
-      if NimbleTOTP.valid?(secret, password, time: base_time) or
-           NimbleTOTP.valid?(secret, password, time: base_time - 30) do
+      since =
+        case get_flow_payload(user_id) do
+          %{totp_last_used: last_used} -> last_used
+          _ -> 0
+        end
+
+      if NimbleTOTP.valid?(secret, password, time: now, since: since) or
+           NimbleTOTP.valid?(secret, password, time: now - 30, since: since) do
+        set_flow_payload(user_id, totp_last_used: now)
         {:ok, :completed}
       else
         {:error, :invalid_otp}
