@@ -3,7 +3,7 @@ defmodule CharonLogin.TOTPChallengeTest do
   alias CharonLogin.Challenges.TOTP
 
   @secret <<68, 97, 110, 105, 32, 105, 115, 32, 99, 111, 111, 108, 33>>
-  @user %{id: 0, totp_secret: @secret}
+  @user %{id: "0", totp_secret: @secret}
   @opts %{}
 
   describe "execute/3" do

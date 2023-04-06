@@ -75,14 +75,13 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Creates a proto-session for the current flow. Uses user_id for session.id.
   """
-  @spec set_flow_payload(pos_integer(), keyword()) :: atom()
+  @spec set_flow_payload(binary(), keyword()) :: any()
   def set_flow_payload(user_id, new_payload \\ []) do
     config = CharonLogin.FastConfig.get_config()
     now = Charon.Internal.now()
     expiration = now + 60 * 15
 
-    proto_session =
-      Charon.SessionStore.get(user_id |> Integer.to_string(), user_id, :proto, config)
+    proto_session = Charon.SessionStore.get(user_id, user_id, :proto, config)
 
     current_payload =
       case proto_session do
@@ -92,7 +91,7 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
 
     Charon.SessionStore.upsert(
       %Charon.Models.Session{
-        id: user_id |> Integer.to_string(),
+        id: user_id,
         user_id: user_id,
         created_at: now,
         expires_at: expiration,
@@ -110,11 +109,11 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Get the proto-session corresponding to the current flow.
   """
-  @spec get_flow_payload(pos_integer()) :: map() | nil
+  @spec get_flow_payload(binary()) :: map() | nil
   def get_flow_payload(user_id) do
     config = CharonLogin.FastConfig.get_config()
 
-    case Charon.SessionStore.get(user_id |> Integer.to_string(), user_id, :proto, config) do
+    case Charon.SessionStore.get(user_id, user_id, :proto, config) do
       %{extra_payload: payload} -> payload
       _ -> %{}
     end
