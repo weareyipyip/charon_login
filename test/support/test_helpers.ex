@@ -19,11 +19,11 @@ defmodule CharonLogin.TestHelpers do
         CharonLogin => %{
           challenges: %{},
           stages: %{},
-          flows: %{}
+          flows: %{},
+          success_callback: &__MODULE__.succes_callback/3,
+          fetch_user: &__MODULE__.fetch_user/1
         }
       }
-      success_callback: &__MODULE__.succes_callback/3
-      fetch_user: &__MODULE__.fetch_user/1
     ]
     |> Charon.Config.from_enum()
   end
