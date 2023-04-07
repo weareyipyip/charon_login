@@ -14,16 +14,16 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
   @doc """
   Handle the request.
   """
-  @spec handle(Charon.Config.t(), Conn.t(), atom()) :: Conn.t()
-  def handle(config, conn, flow_key) do
-    module_config = Internal.get_module_config(config)
-    stage_keys = get_flow(module_config, flow_key)
+  @spec handle(Conn.t(), atom()) :: Conn.t()
+  def handle(conn, flow_key) do
+    module_config = Internal.get_module_config()
+    stage_keys = Map.get(module_config.flows, flow_key)
 
     with user_identifier when not is_nil(user_identifier) <-
            Map.get(conn.body_params, "user_identifier"),
          user <- module_config.fetch_user.(user_identifier) do
       token =
-        create_token(config, %{
+        create_token(%{
           flow_key: flow_key,
           user_identifier: user_identifier,
           incomplete_stages: stage_keys
@@ -31,9 +31,11 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
 
       stages =
         Enum.map(stage_keys, fn stage_key ->
+          challenge_keys = Map.get(module_config.stages, stage_key)
+
           challenges =
-            Enum.map(get_stage(module_config, stage_key), fn challenge_key ->
-              {challenge, _opts} = get_challenge(module_config, challenge_key)
+            Enum.map(challenge_keys, fn challenge_key ->
+              {challenge, _opts} = Map.get(module_config.challenges, challenge_key)
               %{key: challenge_key, type: challenge.type()}
             end)
 

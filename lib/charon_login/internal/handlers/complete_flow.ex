@@ -11,11 +11,11 @@ defmodule CharonLogin.Internal.Handlers.CompleteFlow do
   @doc """
   Handle the request.
   """
-  @spec handle(Charon.Config.t(), Conn.t()) :: Conn.t()
-  def handle(config, conn) do
-    module_config = Internal.get_module_config(config)
+  @spec handle(Conn.t()) :: Conn.t()
+  def handle(conn) do
+    module_config = Internal.get_module_config()
 
-    with {:ok, token_payload} <- fetch_token(config, conn),
+    with {:ok, token_payload} <- fetch_token(conn),
          {:ok, :all_stages_completed} <- check_stages(token_payload.incomplete_stages) do
       module_config.success_callback(conn, token_payload.flow_key, token_payload.user_identifier)
     else
