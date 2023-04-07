@@ -5,7 +5,7 @@ defmodule MfaTest do
     %{resp_body: resp_body} =
       conn(:post, path, body)
       |> put_req_header("authorization", "Bearer #{token}")
-      |> CharonLogin.TestModule.Plugs.LoginEndpoint.call(%{})
+      |> CharonLogin.LoginEndpoint.call(%{})
 
     resp_parsed = Jason.decode!(resp_body)
     {Map.get(resp_parsed, "token"), resp_parsed}
@@ -42,7 +42,7 @@ defmodule MfaTest do
 
       conn(:post, "/complete")
       |> put_req_header("authorization", "Bearer #{token}")
-      |> CharonLogin.TestModule.Plugs.LoginEndpoint.call(%{})
+      |> CharonLogin.LoginEndpoint.call(%{})
     end
   end
 end

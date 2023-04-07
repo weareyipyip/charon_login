@@ -3,7 +3,7 @@ defmodule CharonLogin.PasswordChallengeTest do
   alias CharonLogin.Challenges.Password
 
   @password "swordfish"
-  @user %{password: :crypto.hash(:md5, @password)}
+  @user %{password_hash: :crypto.hash(:md5, @password)}
   @conn %Plug.Conn{body_params: %{"password" => @password}}
   @opts %{validate: &CharonLogin.TestHelpers.validate_password/2}
 
