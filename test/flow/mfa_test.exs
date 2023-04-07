@@ -13,13 +13,6 @@ defmodule MfaTest do
 
   describe "Succesfully walk through a 2FA flow" do
     test "happy path through whole 2FA" do
-      # Send user in conn
-      # Send token
-      # enabled_challenged [:password, :totp], client-side validation
-      # Token contains remaining
-      # in Auth header `bearer ${token}`
-      # new token each request
-
       assert {token, %{"stages" => [%{"key" => "password_stage"}, %{"key" => "totp_stage"}]}} =
                post_conn("/flows/mfa/start", %{"user_identifier" => "00"})
 
