@@ -1,0 +1,61 @@
+name: CI / Automated testing
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    name: Test Elixir ${{ matrix.elixir }}/OTP ${{ matrix.otp }}
+    runs-on: ubuntu-latest
+
+    env:
+      MIX_ENV: test
+
+    strategy:
+      matrix:
+        elixir: [1.13.x, 1.14.x]
+        otp: [24.x, 25.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - id: beam
+        name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - id: deps_build_cache
+        name: Cache deps/build
+        uses: actions/cache@v3
+        with:
+          key: ${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-deps-build-${{ hashFiles('mix.lock') }}
+          restore-keys: ${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-deps-build
+          path: |
+            deps
+            _build
+      - id: plt_cache
+        name: Cache PLTs
+        uses: actions/cache@v3
+        with:
+          key: ${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-plt
+          path: priv/plts
+      - name: Install dependencies
+        if: steps.deps_build_cache.outputs.cache-hit != 'true'
+        run: mix deps.get
+      - name: Compile dependencies
+        if: steps.deps_build_cache.outputs.cache-hit != 'true'
+        run: mix deps.compile
+      - name: Check code formatting
+        run: mix format --check-formatted
+      - name: Compile code (warnings as errors)
+        run: mix compile --warnings-as-errors
+      - name: Run tests
+        run: mix test
+      - name: Create PLTs
+        if: steps.plt_cache.outputs.cache-hit != 'true'
+        run: mix dialyzer --plt
+      - name: Run dialyzer
+        run: mix dialyzer --format github
