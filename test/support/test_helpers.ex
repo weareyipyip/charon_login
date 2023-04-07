@@ -7,16 +7,17 @@ defmodule CharonLogin.TestHelpers do
         nil
 
       uid ->
-        %{
-          id: uid,
-          totp_secret: <<1, 2, 3, 5, 8, 13, 21, 34>>,
-          enabled_challenges: [],
-          password_hash: :crypto.hash(:md5, "admin")
-        }
+        {:ok,
+         %{
+           id: uid,
+           totp_secret: <<1, 2, 3, 5, 8, 13, 21, 34>>,
+           enabled_challenges: [],
+           password_hash: :crypto.hash(:md5, "admin")
+         }}
     end
   end
 
-  def succes_callback(conn, _, _), do: %{conn | resp_body: "{challenge: \"complete\"}"}
+  def succes_callback(conn, _, _), do: %{conn | resp_body: "{\"challenge\": \"complete\"}"}
 
   def validate_password(pass, user_pass) do
     :crypto.hash(:md5, pass) == user_pass
