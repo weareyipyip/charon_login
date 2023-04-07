@@ -14,7 +14,7 @@ defmodule MfaTest do
   describe "Succesfully walk through a 2FA flow" do
     test "happy path through whole 2FA" do
       assert {token, %{"stages" => [%{"key" => "password_stage"}, %{"key" => "totp_stage"}]}} =
-               post_conn("/flows/mfa/start", %{"user_identifier" => "00"})
+               post_conn("/flows/mfa/start", %{"user_identifier" => "1234-abcd"})
 
       assert {token, _} =
                post_conn(
@@ -39,7 +39,7 @@ defmodule MfaTest do
     end
 
     test "error when starting non-existant flow" do
-      assert {nil, %{"error" => "flow_not_found"}} = post_conn("flows/notaflow/start")
+      assert {nil, %{"error" => "flow_not_found"}} = post_conn("/flows/styx/start")
     end
   end
 end

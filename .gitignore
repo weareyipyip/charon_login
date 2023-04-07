@@ -27,3 +27,7 @@ charon_login-*.tar
 
 # Mac finder cache
 .DS_Store
+
+# Dialyzer
+/priv/plts/*.plt
+/priv/plts/*.plt.hash

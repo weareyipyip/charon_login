@@ -1,13 +1,19 @@
 defmodule CharonLogin.TestHelpers do
   def get_base_secret(), do: "0"
 
-  def fetch_user(_) do
-    %{
-      id: "00",
-      totp_secret: <<1, 2, 3, 5, 8, 13, 21, 34>>,
-      enabled_challenges: [],
-      password_hash: :crypto.hash(:md5, "admin")
-    }
+  def fetch_user(user_id) do
+    case user_id do
+      "invalid" ->
+        nil
+
+      uid ->
+        %{
+          id: uid,
+          totp_secret: <<1, 2, 3, 5, 8, 13, 21, 34>>,
+          enabled_challenges: [],
+          password_hash: :crypto.hash(:md5, "admin")
+        }
+    end
   end
 
   def succes_callback(conn, _, _), do: %{conn | resp_body: "{challenge: \"complete\"}"}
