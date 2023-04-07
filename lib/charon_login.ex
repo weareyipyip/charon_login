@@ -10,12 +10,9 @@ defmodule CharonLogin do
 
   defmacro __using__(config) do
     quote location: :keep, generated: true do
-      # @charon_config unquote(config)
       @login_endpoint __MODULE__.Plugs.LoginEndpoint
       @config_endpoint CharonLogin.FastConfig
       @config unquote(config |> Macro.escape())
-
-      # charon_config = Macro.escape(@charon_config)
 
       login_endpoint = LoginEndpoint.generate(unquote(config))
       Module.create(@login_endpoint, login_endpoint, Macro.Env.location(__ENV__))

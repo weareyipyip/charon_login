@@ -47,7 +47,7 @@ defmodule CharonLogin.Internal.GenMod.Plugs.LoginEndpoint do
         end
       end
 
-      def call(%{method: "POST", path_info: ["complete"]} = conn) do
+      def call(%{method: "POST", path_info: ["complete"]} = conn, _) do
         CompleteFlow.handle(@config, conn)
       end
 

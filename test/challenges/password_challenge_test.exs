@@ -5,7 +5,7 @@ defmodule CharonLogin.PasswordChallengeTest do
   @password "swordfish"
   @user %{password: :crypto.hash(:md5, @password)}
   @conn %Plug.Conn{body_params: %{"password" => @password}}
-  @opts %{validate: &__MODULE__.validate_password/2}
+  @opts %{validate: &CharonLogin.TestHelpers.validate_password/2}
 
   describe "execute/3" do
     test "returns error on incorrect arguments" do
@@ -26,9 +26,5 @@ defmodule CharonLogin.PasswordChallengeTest do
     test "returns ok on correct password" do
       assert {:ok, :completed} = Password.execute(@conn, @opts, @user)
     end
-  end
-
-  def validate_password(pass, user_pass) do
-    :crypto.hash(:md5, pass) == user_pass
   end
 end

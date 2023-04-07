@@ -1,5 +1,5 @@
 defmodule CharonLogin.TOTPChallengeTest do
-  use CharonLogin.ChallengeCase
+  use ExUnit.Case
   alias CharonLogin.Challenges.TOTP
 
   @secret <<68, 97, 110, 105, 32, 105, 115, 32, 99, 111, 111, 108, 33>>
@@ -32,13 +32,14 @@ defmodule CharonLogin.TOTPChallengeTest do
     end
 
     test "returns error on already used TOTP" do
+      new_user = %{@user | id: "1"}
       otp = NimbleTOTP.verification_code(@secret)
 
       assert {:ok, :completed} =
-               TOTP.execute(%Plug.Conn{body_params: %{"otp" => otp}}, @opts, @user)
+               TOTP.execute(%Plug.Conn{body_params: %{"otp" => otp}}, @opts, new_user)
 
       assert {:error, :invalid_otp} =
-               TOTP.execute(%Plug.Conn{body_params: %{"otp" => otp}}, @opts, @user)
+               TOTP.execute(%Plug.Conn{body_params: %{"otp" => otp}}, @opts, new_user)
     end
   end
 end

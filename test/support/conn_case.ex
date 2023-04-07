@@ -4,6 +4,7 @@ defmodule CharonLogin.ConnCase do
   using do
     quote do
       import Plug.Conn
+      import CharonLogin.TestHelpers
       use Plug.Test
     end
   end
