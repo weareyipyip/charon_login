@@ -1,7 +1,7 @@
 defmodule MfaTest do
   use CharonLogin.ConnCase
 
-  defp post_conn(path, body, token \\ "") do
+  defp post_conn(path, body \\ %{}, token \\ "") do
     %{resp_body: resp_body} =
       conn(:post, path, body)
       |> put_req_header("authorization", "Bearer #{token}")
@@ -36,6 +36,10 @@ defmodule MfaTest do
       conn(:post, "/complete")
       |> put_req_header("authorization", "Bearer #{token}")
       |> CharonLogin.LoginEndpoint.call(%{})
+    end
+
+    test "error when starting non-existant flow" do
+      assert {nil, %{"error" => "flow_not_found"}} = post_conn("flows/notaflow/start")
     end
   end
 end

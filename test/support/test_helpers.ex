@@ -33,7 +33,9 @@ defmodule CharonLogin.TestHelpers do
             totp_stage: [:totp]
           },
           flows: %{
-            mfa: [:password_stage, :totp_stage]
+            mfa: [:password_stage, :totp_stage],
+            password_flow: [:password_stage],
+            totp_flow: [:totp_stage]
           },
           success_callback: &__MODULE__.succes_callback/3,
           fetch_user: &__MODULE__.fetch_user/1
