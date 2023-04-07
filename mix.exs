@@ -5,12 +5,13 @@ defmodule CharonLogin.MixProject do
     [
       app: :charon_login,
       version: "0.1.0",
-      elixir: "~> 1.14",
+      elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: [
-        plt_add_apps: [:nimble_totp]
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
+        plt_add_apps: [:ex_unit, :nimble_totp]
       ]
     ]
   end
@@ -32,9 +33,9 @@ defmodule CharonLogin.MixProject do
       {:jason, "~> 1.4"},
       {:charon, ">= 2.0.0 and < 4.0.0"},
       {:nimble_totp, "~> 1.0", optional: true},
-      {:ex_doc, "~> 0.27", only: :dev, runtime: false},
-      {:makeup_json, ">= 0.0.0", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.2", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.27", only: [:dev, :test], runtime: false},
+      {:makeup_json, ">= 0.0.0", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false}
     ]
   end
 end
