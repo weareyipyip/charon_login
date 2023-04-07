@@ -10,9 +10,6 @@ defmodule CharonLogin do
     quote location: :keep, generated: true do
       @config unquote(config |> Macro.escape())
 
-      # suppress "redefining module" warning, because we actually want to redefine it :)
-      Code.compiler_options(ignore_module_conflict: true)
-
       Module.create(
         CharonLogin.FastConfig,
         quote do
@@ -20,8 +17,6 @@ defmodule CharonLogin do
         end,
         Macro.Env.location(__ENV__)
       )
-
-      Code.compiler_options(ignore_module_conflict: false)
     end
   end
 end

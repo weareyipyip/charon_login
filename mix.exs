@@ -8,7 +8,10 @@ defmodule CharonLogin.MixProject do
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      dialyzer: [
+        plt_add_apps: [:nimble_totp]
+      ]
     ]
   end
 
@@ -30,7 +33,8 @@ defmodule CharonLogin.MixProject do
       {:charon, ">= 2.0.0 and < 4.0.0"},
       {:nimble_totp, "~> 1.0", optional: true},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
-      {:makeup_json, ">= 0.0.0", only: :dev, runtime: false}
+      {:makeup_json, ">= 0.0.0", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.2", only: :dev, runtime: false}
     ]
   end
 end
