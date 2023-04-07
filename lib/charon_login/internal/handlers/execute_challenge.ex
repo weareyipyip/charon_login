@@ -11,27 +11,28 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
   @doc """
   Handle the request.
   """
-  @spec handle(Charon.Config.t(), Conn.t(), atom(), atom()) :: Conn.t()
-  def handle(config, conn, stage_key, challenge_key) do
-    module_config = Internal.get_module_config(config)
+  @spec handle(Conn.t(), atom(), atom()) :: Conn.t()
+  def handle(conn, stage_key, challenge_key) do
+    module_config = Internal.get_module_config()
+    available_challenges = Map.get(module_config.stages, stage_key)
 
-    with {:ok, token_payload} <- fetch_token(config, conn),
+    with {:ok, token_payload} <- fetch_token(conn),
          {:ok, :is_current_stage} <- check_stage(token_payload.incomplete_stages, stage_key),
-         {:ok, :is_valid_challenge} <- check_challenge(module_config, stage_key, challenge_key) do
+         {:ok, :is_valid_challenge} <- check_challenge(available_challenges, challenge_key) do
       user = module_config.fetch_user.(token_payload.user_identifier)
-      {challenge, opts} = get_challenge(module_config, challenge_key)
+      {challenge, opts} = Map.get(module_config.challenges, challenge_key)
 
       case challenge.execute(conn, opts, user) do
         {:ok, :completed} ->
           incomplete_stages = complete_current_stage(token_payload.incomplete_stages)
 
           send_json(conn, %{
-            token: create_token(config, %{token_payload | incomplete_stages: incomplete_stages})
+            token: create_token(%{token_payload | incomplete_stages: incomplete_stages})
           })
 
         {:ok, :continue} ->
           send_json(conn, %{
-            token: create_token(config, token_payload)
+            token: create_token(token_payload)
           })
 
         {:error, error} ->
@@ -48,10 +49,8 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
       else: {:error, :is_not_current_stage}
   end
 
-  defp check_challenge(module_config, stage_key, challenge_key) do
-    challenge_keys = get_stage(module_config, stage_key)
-
-    if challenge_key in challenge_keys,
+  defp check_challenge(available_challenges, challenge_key) do
+    if challenge_key in available_challenges,
       do: {:ok, :is_valid_challenge},
       else: {:error, :is_invalid_challenge}
   end
