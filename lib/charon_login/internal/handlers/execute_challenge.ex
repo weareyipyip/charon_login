@@ -19,10 +19,10 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
     with {:ok, token_payload} <- fetch_token(conn),
          {:ok, :is_current_stage} <- check_stage(token_payload.incomplete_stages, stage_key),
          {:ok, :is_valid_challenge} <- check_challenge(available_challenges, challenge_key) do
-      user = module_config.fetch_user.(token_payload.user_identifier)
+      {:ok, user} = module_config.fetch_user.(token_payload.user_identifier)
       {challenge, opts} = Map.get(module_config.challenges, challenge_key)
 
-      case challenge.execute.(conn, opts, user) do
+      case challenge.execute(conn, opts, user) do
         {:ok, :completed} ->
           incomplete_stages = complete_current_stage(token_payload.incomplete_stages)
 

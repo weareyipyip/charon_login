@@ -1,5 +1,27 @@
 defmodule CharonLogin.TestHelpers do
-  def get_base_secret(), do: 0
+  def get_base_secret(), do: "0"
+
+  def fetch_user(user_id) do
+    case user_id do
+      "invalid" ->
+        nil
+
+      uid ->
+        {:ok,
+         %{
+           id: uid,
+           totp_secret: <<1, 2, 3, 5, 8, 13, 21, 34>>,
+           enabled_challenges: [],
+           password_hash: :crypto.hash(:md5, "admin")
+         }}
+    end
+  end
+
+  def succes_callback(conn, _, _), do: %{conn | resp_body: "{\"challenge\": \"complete\"}"}
+
+  def validate_password(pass, user_pass) do
+    :crypto.hash(:md5, pass) == user_pass
+  end
 
   def get_config() do
     [
@@ -8,9 +30,22 @@ defmodule CharonLogin.TestHelpers do
       session_store_module: Charon.SessionStore.LocalStore,
       optional_modules: %{
         CharonLogin => %{
-          challenges: %{},
-          stages: %{},
-          flows: %{}
+          challenges: %{
+            password:
+              {CharonLogin.Challenges.Password, %{validate: &__MODULE__.validate_password/2}},
+            totp: {CharonLogin.Challenges.TOTP, %{}}
+          },
+          stages: %{
+            password_stage: [:password],
+            totp_stage: [:totp]
+          },
+          flows: %{
+            mfa: [:password_stage, :totp_stage],
+            password_flow: [:password_stage],
+            totp_flow: [:totp_stage]
+          },
+          success_callback: &__MODULE__.succes_callback/3,
+          fetch_user: &__MODULE__.fetch_user/1
         }
       }
     ]

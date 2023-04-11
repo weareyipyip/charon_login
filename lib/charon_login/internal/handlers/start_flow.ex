@@ -21,7 +21,7 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
 
     with user_identifier when not is_nil(user_identifier) <-
            Map.get(conn.body_params, "user_identifier"),
-         user <- module_config.fetch_user.(user_identifier) do
+         {:ok, user} <- fetch_user_by_id(module_config, user_identifier) do
       token =
         create_token(%{
           flow_key: flow_key,
@@ -44,7 +44,16 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
 
       send_json(conn, %{stages: stages, enabled_challenges: user.enabled_challenges, token: token})
     else
+      {:error, reason} -> send_json(conn, %{error: reason}, 400)
       nil -> send_json(conn, %{error: :invalid_user}, 400)
+    end
+  end
+
+  defp fetch_user_by_id(module_config, user_id) do
+    case module_config.fetch_user.(user_id) do
+      {:ok, user} -> {:ok, user}
+      {:error, reason} -> {:error, reason}
+      _ -> {:error, :user_not_found}
     end
   end
 end

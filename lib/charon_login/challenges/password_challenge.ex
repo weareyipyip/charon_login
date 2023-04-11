@@ -24,10 +24,11 @@ defmodule CharonLogin.Challenges.Password do
   def type(), do: :password
 
   @impl true
+
   def execute(
         %Plug.Conn{body_params: %{"password" => password}} = _conn,
         %{validate: validate} = _opts,
-        %{password: user_password} = _user
+        %{password_hash: user_password} = _user
       ) do
     if validate.(password, user_password) do
       {:ok, :completed}

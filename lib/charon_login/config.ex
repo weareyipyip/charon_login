@@ -51,7 +51,7 @@ defmodule CharonLogin.Config do
   @type stages :: %{atom() => [atom()]}
   @type flows :: %{atom() => [atom()]}
   @type success_callback :: (Plug.Conn.t(), atom(), String.t() -> map())
-  @type fetch_user :: (String.t() -> %{enabled_challenges: [atom()]} | nil)
+  @type fetch_user :: (String.t() -> {:ok, %{enabled_challenges: [atom()]}} | {:error, any()})
 
   @type t :: %__MODULE__{
           challenges: challenges(),
