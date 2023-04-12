@@ -13,10 +13,9 @@ defmodule CharonLogin.Internal.Handlers.CompleteFlow do
   """
   @spec handle(Conn.t()) :: Conn.t()
   def handle(conn) do
-    config = Internal.conn_config(conn)
     module_config = Internal.conn_module_config(conn)
 
-    with {:ok, token_payload} <- fetch_token(config, conn),
+    with {:ok, token_payload} <- fetch_token(conn),
          {:ok, :all_stages_completed} <- check_stages(token_payload.incomplete_stages) do
       module_config.success_callback.(conn, token_payload.flow_key, token_payload.user_identifier)
     else

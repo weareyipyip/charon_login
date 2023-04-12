@@ -1,4 +1,5 @@
 defmodule CharonLogin.Internal.Handlers.Helpers do
+  alias CharonLogin.Internal
   alias Plug.Conn
 
   import Conn
@@ -8,12 +9,14 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Create a new progress token.
   """
-  @spec create_token(Charon.Config.t(), token()) :: String.t()
-  def create_token(config, %{
+  @spec create_token(Conn.t(), token()) :: String.t()
+  def create_token(conn, %{
         flow_key: flow_key,
         user_identifier: user_identifier,
         incomplete_stages: incomplete_stages
       }) do
+    config = Internal.conn_config(conn)
+
     {:ok, token} =
       config.token_factory_module.sign(
         %{
@@ -30,9 +33,10 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Fetch and validate the progress token from the current request.
   """
-  @spec fetch_token(Charon.Config.t(), Conn.t()) ::
-          {:ok, token()} | {:error, :invalid_authorization}
-  def fetch_token(config, conn) do
+  @spec fetch_token(Conn.t()) :: {:ok, token()} | {:error, :invalid_authorization}
+  def fetch_token(conn) do
+    config = Internal.conn_config(conn)
+
     with ["Bearer " <> token] <- get_req_header(conn, "authorization"),
          {:ok,
           %{
