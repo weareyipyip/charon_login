@@ -1,4 +1,5 @@
 defmodule CharonLogin.Endpoint do
+  alias CharonLogin.Internal
   alias CharonLogin.Internal.LoginEndpoint
 
   use Plug.Builder
@@ -10,14 +11,8 @@ defmodule CharonLogin.Endpoint do
 
   @impl true
   def call(conn, opts) do
-    with %Charon.Config{} = config <- opts[:config],
-         %{optional_modules: %{CharonLogin => module_config}} <- config do
-      conn
-      |> put_private(:charon_login_config, config)
-      |> put_private(:charon_login_module_config, module_config)
-      |> super([])
-    else
-      _ -> raise "Missing or invalid config"
-    end
+    conn
+    |> Internal.put_conn_config(opts[:config])
+    |> super([])
   end
 end
