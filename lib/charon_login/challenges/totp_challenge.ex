@@ -1,34 +1,34 @@
-defmodule CharonLogin.Challenges.TOTP do
-  @moduledoc """
-  Verifies a Time-based One-Time Password using NimbleTOTP.
-  Succeeds if given password is valid for this or the previous 30-second cycle.
-  Passwords can only be used once.
+if Code.ensure_loaded?(NimbleTOTP) do
+  defmodule CharonLogin.Challenges.TOTP do
+    @moduledoc """
+    Verifies a Time-based One-Time Password using NimbleTOTP.
+    Succeeds if given password is valid for this or the previous 30-second cycle.
+    Passwords can only be used once.
 
-  Charon config:
+    Charon config:
 
-      CharonLogin %{
-        challenges: %{
-          challenge_name: {CharonLogin.Challenges.TOTP, %{}}
+        CharonLogin %{
+          challenges: %{
+            challenge_name: {CharonLogin.Challenges.TOTP, %{}}
+          }
         }
-      }
 
-  Request JSON body:
+    Request JSON body:
 
-  ```json
-  {
-    "otp": "123456"
-  }
-  ```
-  """
-  @behaviour CharonLogin.Challenge
-
-  @impl true
-  def type(), do: :totp
-
-  if(Code.ensure_loaded?(NimbleTOTP)) do
+    ```json
+    {
+      "otp": "123456"
+    }
+    ```
+    """
     alias CharonLogin.Internal
 
     import CharonLogin.Internal.Handlers.Helpers
+
+    @behaviour CharonLogin.Challenge
+
+    @impl true
+    def type(), do: :totp
 
     @impl true
     def execute(
@@ -55,7 +55,9 @@ defmodule CharonLogin.Challenges.TOTP do
     end
 
     def execute(_, _, _), do: {:error, :invalid_args}
-  else
+  end
+else
+  defmodule CharonLogin.Challenges.TOTP do
     @impl true
     def execute(_, _, _), do: raise("TOTP challenge relies on NimbleTOTP dependency.")
   end
