@@ -1,4 +1,4 @@
-defmodule CharonLogin.LoginEndpoint do
+defmodule CharonLogin.Internal.LoginEndpoint do
   @moduledoc """
   ## Usage
 
@@ -17,7 +17,7 @@ defmodule CharonLogin.LoginEndpoint do
 
   @impl true
   def call(%{method: "POST", path_info: ["flows", flow_key, "start"]} = conn, _) do
-    module_config = Internal.get_module_config()
+    module_config = Internal.conn_module_config(conn)
 
     with {:ok, flow_key} <- parse_flow_key(module_config.flows, flow_key) do
       StartFlow.handle(conn, flow_key)
@@ -33,7 +33,7 @@ defmodule CharonLogin.LoginEndpoint do
         } = conn,
         _
       ) do
-    module_config = Internal.get_module_config()
+    module_config = Internal.conn_module_config(conn)
 
     with {:ok, stage_key} <- parse_stage_key(module_config.stages, stage_key),
          {:ok, challenge_key} <- parse_challenge_key(module_config.challenges, challenge_key) do
