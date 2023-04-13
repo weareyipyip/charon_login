@@ -13,7 +13,7 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
   """
   @spec handle(Conn.t(), atom(), atom()) :: Conn.t()
   def handle(conn, stage_key, challenge_key) do
-    module_config = Internal.get_module_config()
+    module_config = Internal.conn_module_config(conn)
     available_challenges = Map.get(module_config.stages, stage_key)
 
     with {:ok, token_payload} <- fetch_token(conn),
@@ -27,12 +27,12 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
           incomplete_stages = complete_current_stage(token_payload.incomplete_stages)
 
           send_json(conn, %{
-            token: create_token(%{token_payload | incomplete_stages: incomplete_stages})
+            token: create_token(conn, %{token_payload | incomplete_stages: incomplete_stages})
           })
 
         {:ok, :continue} ->
           send_json(conn, %{
-            token: create_token(token_payload)
+            token: create_token(conn, token_payload)
           })
 
         {:error, error} ->

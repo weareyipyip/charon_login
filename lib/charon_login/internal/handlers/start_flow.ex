@@ -16,14 +16,14 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
   """
   @spec handle(Conn.t(), atom()) :: Conn.t()
   def handle(conn, flow_key) do
-    module_config = Internal.get_module_config()
+    module_config = Internal.conn_module_config(conn)
     stage_keys = Map.get(module_config.flows, flow_key)
 
     with user_identifier when not is_nil(user_identifier) <-
            Map.get(conn.body_params, "user_identifier"),
          {:ok, user} <- fetch_user_by_id(module_config, user_identifier) do
       token =
-        create_token(%{
+        create_token(conn, %{
           flow_key: flow_key,
           user_identifier: user_identifier,
           incomplete_stages: stage_keys

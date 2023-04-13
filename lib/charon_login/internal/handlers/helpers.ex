@@ -9,13 +9,13 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Create a new progress token.
   """
-  @spec create_token(token()) :: String.t()
-  def create_token(%{
+  @spec create_token(Conn.t(), token()) :: String.t()
+  def create_token(conn, %{
         flow_key: flow_key,
         user_identifier: user_identifier,
         incomplete_stages: incomplete_stages
       }) do
-    config = Internal.get_config()
+    config = Internal.conn_config(conn)
 
     {:ok, token} =
       config.token_factory_module.sign(
@@ -35,7 +35,7 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   """
   @spec fetch_token(Conn.t()) :: {:ok, token()} | {:error, :invalid_authorization}
   def fetch_token(conn) do
-    config = Internal.get_config()
+    config = Internal.conn_config(conn)
 
     with ["Bearer " <> token] <- get_req_header(conn, "authorization"),
          {:ok,
@@ -58,9 +58,8 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Creates a proto-session for the current flow. Uses user_id for session.id.
   """
-  @spec set_flow_payload(binary(), keyword()) :: any()
-  def set_flow_payload(user_id, new_payload \\ []) do
-    config = Internal.get_config()
+  @spec set_flow_payload(Charon.Config.t(), binary(), keyword()) :: any()
+  def set_flow_payload(config, user_id, new_payload \\ []) do
     now = Charon.Internal.now()
     expiration = now + 60 * 15
 
@@ -92,10 +91,8 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Get the proto-session corresponding to the current flow.
   """
-  @spec get_flow_payload(binary()) :: map() | nil
-  def get_flow_payload(user_id) do
-    config = Internal.get_config()
-
+  @spec get_flow_payload(Charon.Config.t(), binary()) :: map() | nil
+  def get_flow_payload(config, user_id) do
     case Charon.SessionStore.get(user_id, user_id, :proto, config) do
       %{extra_payload: payload} -> payload
       _ -> %{}

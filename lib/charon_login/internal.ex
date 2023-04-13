@@ -1,19 +1,18 @@
 defmodule CharonLogin.Internal do
-  @compile {:no_warn_undefined, {CharonLogin.FastConfig, :get_config, 0}}
+  @spec conn_config(Plug.Conn.t()) :: Charon.Config.t()
+  def conn_config(%{private: %{charon_login_config: config}}), do: config
 
-  @doc false
-  @spec get_config() :: Charon.Config.t()
-  def get_config() do
-    CharonLogin.FastConfig.get_config()
-  rescue
-    UndefinedFunctionError ->
-      raise("Cannot find config, did you call `use CharonLogin, @charon_config`?")
+  @spec conn_module_config(Plug.Conn.t()) :: CharonLogin.Config.t()
+  def conn_module_config(%{private: %{charon_login_module_config: module_config}}),
+    do: module_config
+
+  @spec put_conn_config(Plug.Conn.t(), Charon.Config.t()) :: Plug.Conn.t()
+  def put_conn_config(
+        conn,
+        %Charon.Config{optional_modules: %{CharonLogin => module_config}} = config
+      ) do
+    conn
+    |> Plug.Conn.put_private(:charon_login_config, config)
+    |> Plug.Conn.put_private(:charon_login_module_config, module_config)
   end
-
-  @doc false
-  @spec get_module_config() :: CharonLogin.Config.t()
-  def get_module_config(), do: get_config() |> get_module_config()
-
-  @spec get_module_config(Charon.Config.t()) :: CharonLogin.Config.t()
-  def get_module_config(%{optional_modules: %{CharonLogin => config}}), do: config
 end

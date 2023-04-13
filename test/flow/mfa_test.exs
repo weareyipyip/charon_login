@@ -2,12 +2,13 @@ defmodule MfaTest do
   use CharonLogin.ConnCase
 
   @uid "1234-abcd"
+  @config CharonLogin.TestHelpers.get_config()
 
   defp post_conn(path, body \\ %{}, token \\ "") do
     %{resp_body: resp_body} =
       conn(:post, path, body)
       |> put_req_header("authorization", "Bearer #{token}")
-      |> CharonLogin.LoginEndpoint.call(%{})
+      |> CharonLogin.Endpoint.call(config: @config)
 
     resp_parsed = Jason.decode!(resp_body)
     {Map.get(resp_parsed, "token"), resp_parsed}
