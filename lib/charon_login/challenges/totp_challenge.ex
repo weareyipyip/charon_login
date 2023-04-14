@@ -38,16 +38,16 @@ if Code.ensure_loaded?(NimbleTOTP) do
         ) do
       config = Internal.conn_config(conn)
       now = Elixir.System.os_time(:second)
-
-      since =
-        case get_flow_payload(config, user_id) do
-          %{totp_last_used: last_used} -> last_used
-          _ -> 0
-        end
+      session = get_flow_payload(config, user_id)
+      since = get_in(session, [Access.key(:extra_payload), Access.key(:totp_last_used)]) || 0
 
       if NimbleTOTP.valid?(secret, password, time: now, since: since) or
            NimbleTOTP.valid?(secret, password, time: now - 30, since: since) do
-        set_flow_payload(config, user_id, totp_last_used: now)
+        new_session =
+          put_in(session, [Access.key(:extra_payload), Access.key(:totp_last_used)], now)
+
+        :ok = set_flow_payload(config, new_session)
+
         {:ok, :completed}
       else
         {:error, :invalid_otp}

@@ -58,44 +58,40 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Creates a proto-session for the current flow. Uses user_id for session.id.
   """
-  @spec set_flow_payload(Charon.Config.t(), binary(), keyword()) :: any()
-  def set_flow_payload(config, user_id, new_payload \\ []) do
+  @spec set_flow_payload(Charon.Config.t(), Charon.Models.Session.t()) ::
+          :ok | {:error, :conflict | binary}
+  def set_flow_payload(config, session) do
     now = Charon.Internal.now()
     expiration = now + 60 * 15
 
-    proto_session = Charon.SessionStore.get(user_id, user_id, :proto, config)
-
-    current_payload =
-      case proto_session do
-        %{extra_payload: payload, expires_at: expires_at} when expires_at > now -> payload
-        _ -> %{}
-      end
-
-    Charon.SessionStore.upsert(
-      %Charon.Models.Session{
-        id: user_id,
-        user_id: user_id,
-        created_at: now,
-        expires_at: expiration,
-        type: :proto,
-        refreshed_at: now,
-        refresh_expires_at: expiration,
-        refresh_token_id: 0,
-        tokens_fresh_from: 0,
-        extra_payload: Enum.into(new_payload, current_payload)
-      },
-      config
-    )
+    Charon.SessionStore.upsert(session |> Map.put(:expires_at, expiration), config)
   end
 
   @doc """
   Get the proto-session corresponding to the current flow.
   """
-  @spec get_flow_payload(Charon.Config.t(), binary()) :: map() | nil
+  @spec get_flow_payload(Charon.Config.t(), binary()) :: Charon.Models.Session.t()
   def get_flow_payload(config, user_id) do
     case Charon.SessionStore.get(user_id, user_id, :proto, config) do
-      %{extra_payload: payload} -> payload
-      _ -> %{}
+      nil ->
+        now = Charon.Internal.now()
+        expiration = now + 60 * 15
+
+        %Charon.Models.Session{
+          id: user_id,
+          user_id: user_id,
+          created_at: now,
+          expires_at: expiration,
+          type: :proto,
+          refreshed_at: now,
+          refresh_expires_at: expiration,
+          refresh_token_id: 0,
+          tokens_fresh_from: 0,
+          extra_payload: %{}
+        }
+
+      session ->
+        session
     end
   end
 
