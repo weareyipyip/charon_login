@@ -58,13 +58,16 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Creates a proto-session for the current flow. Uses user_id for session.id.
   """
-  @spec set_flow_payload(Charon.Config.t(), Charon.Models.Session.t()) ::
+  @spec set_flow_payload(Charon.Config.t(), Charon.Models.Session.t(), map()) ::
           :ok | {:error, :conflict | binary}
-  def set_flow_payload(config, session) do
+  def set_flow_payload(config, session, extra_payload_updates \\ %{}) do
     now = Charon.Internal.now()
     expiration = now + 60 * 15
 
-    Charon.SessionStore.upsert(session |> Map.put(:expires_at, expiration), config)
+    session
+    |> Map.put(:expires_at, expiration)
+    |> Map.update(:extra_payload, %{}, &Map.merge(&1, extra_payload_updates))
+    |> Charon.SessionStore.upsert(config)
   end
 
   @doc """

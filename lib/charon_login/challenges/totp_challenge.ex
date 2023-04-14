@@ -39,22 +39,24 @@ if Code.ensure_loaded?(NimbleTOTP) do
       config = Internal.conn_config(conn)
       now = Elixir.System.os_time(:second)
       session = get_flow_payload(config, user_id)
-      since = get_in(session, [Access.key(:extra_payload), Access.key(:totp_last_used)]) || 0
+      since = Map.get(session.extra_payload, :totp_last_used, 0)
 
-      if NimbleTOTP.valid?(secret, password, time: now, since: since) or
-           NimbleTOTP.valid?(secret, password, time: now - 30, since: since) do
-        new_session =
-          put_in(session, [Access.key(:extra_payload), Access.key(:totp_last_used)], now)
-
-        :ok = set_flow_payload(config, new_session)
-
+      with {:ok, :valid} <- validate_totp(secret, password, now, since),
+           :ok <- set_flow_payload(config, session, %{totp_last_used: now}) do
         {:ok, :completed}
-      else
-        {:error, :invalid_otp}
       end
     end
 
     def execute(_, _, _), do: {:error, :invalid_args}
+
+    defp validate_totp(secret, password, now, since) do
+      if NimbleTOTP.valid?(secret, password, time: now, since: since) or
+           NimbleTOTP.valid?(secret, password, time: now - 30, since: since) do
+        {:ok, :valid}
+      else
+        {:error, :invalid_otp}
+      end
+    end
   end
 else
   defmodule CharonLogin.Challenges.TOTP do
