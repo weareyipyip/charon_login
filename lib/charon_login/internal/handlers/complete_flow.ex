@@ -15,8 +15,9 @@ defmodule CharonLogin.Internal.Handlers.CompleteFlow do
   def handle(conn) do
     module_config = Internal.conn_module_config(conn)
 
-    with {:ok, %{extra_payload: session_payload}} <- fetch_token(conn),
-         {:ok, :all_stages_completed} <- check_stages(session_payload.incomplete_stages) do
+    with {:ok, %{extra_payload: session_payload} = session} <- fetch_token(conn),
+         {:ok, :all_stages_completed} <- check_stages(session_payload.incomplete_stages),
+         :ok <- delete_token(conn, session) do
       module_config.success_callback.(
         conn,
         session_payload.flow_key,

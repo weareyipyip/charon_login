@@ -25,12 +25,14 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
       case challenge.execute(conn, opts, user) do
         {:ok, :completed} ->
           incomplete_stages = complete_current_stage(session_payload.incomplete_stages)
-          update_token(conn, session, %{incomplete_stages: incomplete_stages})
 
-          send_json(conn, %{status: :completed})
+          case update_token(conn, session, %{incomplete_stages: incomplete_stages}) do
+            :ok -> send_json(conn, %{result: :completed})
+            {:error, error} -> send_json(conn, %{error: error}, 400)
+          end
 
         {:ok, :continue} ->
-          send_json(conn, %{status: :continue})
+          send_json(conn, %{result: :continue})
 
         {:error, error} ->
           send_json(conn, %{error: error}, 500)

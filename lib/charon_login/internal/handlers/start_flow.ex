@@ -21,14 +21,13 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
 
     with user_identifier when not is_nil(user_identifier) <-
            Map.get(conn.body_params, "user_identifier"),
-         {:ok, user} <- fetch_user_by_id(module_config, user_identifier) do
-      token =
-        create_token(conn, %{
-          flow_key: flow_key,
-          user_identifier: user_identifier,
-          incomplete_stages: stage_keys
-        })
-
+         {:ok, user} <- fetch_user_by_id(module_config, user_identifier),
+         {:ok, token} <-
+           create_token(conn, %{
+             flow_key: flow_key,
+             user_identifier: user_identifier,
+             incomplete_stages: stage_keys
+           }) do
       stages =
         Enum.map(stage_keys, fn stage_key ->
           challenge_keys = Map.get(module_config.stages, stage_key)

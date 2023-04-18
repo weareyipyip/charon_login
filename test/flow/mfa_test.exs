@@ -1,7 +1,6 @@
 defmodule MfaTest do
   use CharonLogin.ConnCase
 
-  @uid "1234-abcd"
   @config CharonLogin.TestHelpers.get_config()
 
   defp post_conn(path, body \\ %{}, token \\ "") do
@@ -15,22 +14,24 @@ defmodule MfaTest do
 
   describe "Succesfully walk through a 2FA flow" do
     test "happy path through whole 2FA" do
+      user_id = Charon.Internal.Crypto.random_url_encoded(16)
+
       assert %{
                "stages" => [%{"key" => "password_stage"}, %{"key" => "totp_stage"}],
                "token" => token
-             } = post_conn("/flows/mfa/start", %{"user_identifier" => @uid})
+             } = post_conn("/flows/mfa/start", %{"user_identifier" => user_id})
 
-      assert %{} =
+      assert %{"result" => "completed"} =
                post_conn(
                  "/stages/password_stage/challenges/password/execute",
                  %{"password" => "admin"},
                  token
                )
 
-      {:ok, %{totp_secret: secret}} = fetch_user(@uid)
+      {:ok, %{totp_secret: secret}} = fetch_user(user_id)
       totp_code = NimbleTOTP.verification_code(secret)
 
-      assert %{} =
+      assert %{"result" => "completed"} =
                post_conn(
                  "/stages/totp_stage/challenges/totp/execute",
                  %{"otp" => totp_code},
@@ -58,7 +59,9 @@ defmodule MfaTest do
     end
 
     test "error on trying to skip a stage" do
-      assert %{"token" => token} = post_conn("/flows/mfa/start", %{"user_identifier" => @uid})
+      user_id = Charon.Internal.Crypto.random_url_encoded(16)
+
+      assert %{"token" => token} = post_conn("/flows/mfa/start", %{"user_identifier" => user_id})
 
       assert %{"error" => "is_not_current_stage"} =
                post_conn(
@@ -69,7 +72,9 @@ defmodule MfaTest do
     end
 
     test "error on incorrect challenge" do
-      assert %{"token" => token} = post_conn("/flows/mfa/start", %{"user_identifier" => @uid})
+      user_id = Charon.Internal.Crypto.random_url_encoded(16)
+
+      assert %{"token" => token} = post_conn("/flows/mfa/start", %{"user_identifier" => user_id})
 
       assert %{"error" => "is_invalid_challenge"} =
                post_conn(
@@ -80,12 +85,43 @@ defmodule MfaTest do
     end
 
     test "error on trying to complete flow without stages" do
+      user_id = Charon.Internal.Crypto.random_url_encoded(16)
+
       assert %{
                "stages" => [%{"key" => "password_stage"}, %{"key" => "totp_stage"}],
                "token" => token
-             } = post_conn("/flows/mfa/start", %{"user_identifier" => @uid})
+             } = post_conn("/flows/mfa/start", %{"user_identifier" => user_id})
 
       assert %{"error" => "incomplete_stages"} = post_conn("/complete", %{}, token)
+    end
+
+    test "error when trying to complete flow more than once" do
+      user_id = Charon.Internal.Crypto.random_url_encoded(16)
+
+      assert %{
+               "stages" => [%{"key" => "password_stage"}, %{"key" => "totp_stage"}],
+               "token" => token
+             } = post_conn("/flows/mfa/start", %{"user_identifier" => user_id})
+
+      assert %{"result" => "completed"} =
+               post_conn(
+                 "/stages/password_stage/challenges/password/execute",
+                 %{"password" => "admin"},
+                 token
+               )
+
+      {:ok, %{totp_secret: secret}} = fetch_user(user_id)
+      totp_code = NimbleTOTP.verification_code(secret)
+
+      assert %{"result" => "completed"} =
+               post_conn(
+                 "/stages/totp_stage/challenges/totp/execute",
+                 %{"otp" => totp_code},
+                 token
+               )
+
+      assert %{"challenge" => "complete"} = post_conn("/complete", %{}, token)
+      assert %{"error" => "invalid_authorization"} = post_conn("/complete", %{}, token)
     end
   end
 end
