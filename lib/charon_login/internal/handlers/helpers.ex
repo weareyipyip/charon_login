@@ -4,12 +4,14 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
 
   import Conn
 
+  require Logger
+
   @type token :: %{flow_key: atom(), user_identifier: String.t(), incomplete_stages: [atom()]}
 
   @doc """
   Create a new progress token.
   """
-  @spec create_token(Conn.t(), token()) :: String.t()
+  @spec create_token(Conn.t(), token()) :: {:ok, String.t()} | {:error, :unexpected_error}
   def create_token(conn, %{
         flow_key: flow_key,
         user_identifier: user_identifier,
@@ -17,39 +19,91 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
       }) do
     config = Internal.conn_config(conn)
 
-    {:ok, token} =
-      config.token_factory_module.sign(
-        %{
-          "flow_key" => Atom.to_string(flow_key),
-          "user_identifier" => user_identifier,
-          "incomplete_stages" => Enum.map(incomplete_stages, &Atom.to_string/1)
-        },
-        config
-      )
+    now = Charon.Internal.now()
+    expiration = now + 60 * 15
 
-    token
+    session = %Charon.Models.Session{
+      id: Charon.Internal.Crypto.random_url_encoded(16),
+      user_id: user_identifier,
+      created_at: now,
+      expires_at: expiration,
+      type: :proto,
+      refreshed_at: now,
+      refresh_expires_at: expiration,
+      refresh_token_id: 0,
+      tokens_fresh_from: 0,
+      extra_payload: %{
+        flow_key: flow_key,
+        user_identifier: user_identifier,
+        incomplete_stages: incomplete_stages
+      }
+    }
+
+    with :ok <- Charon.SessionStore.upsert(session, config),
+         {:ok, token} <-
+           config.token_factory_module.sign(
+             %{"session_id" => session.id, "user_id" => session.user_id},
+             config
+           ) do
+      {:ok, token}
+    else
+      {:error, error} ->
+        Logger.warning("Failed to create token: #{inspect(error)}")
+        {:error, :unexpected_error}
+    end
+  end
+
+  @doc """
+  Update the progress token.
+  """
+  @spec update_token(Conn.t(), Charon.Models.Session.t(), map()) ::
+          :ok | {:error, :unexpected_error}
+  def update_token(conn, session, updates) do
+    config = Internal.conn_config(conn)
+
+    case session
+         |> Map.update(:extra_payload, %{}, &Map.merge(&1, updates))
+         |> Charon.SessionStore.upsert(config) do
+      :ok ->
+        :ok
+
+      {:error, error} ->
+        Logger.warning("Failed to update token: #{inspect(error)}")
+        {:error, :unexpected_error}
+    end
+  end
+
+  @doc """
+  Delete the progress token.
+  """
+  @spec delete_token(Conn.t(), Charon.Models.Session.t()) :: :ok | {:error, :unexpected_error}
+  def delete_token(conn, session) do
+    config = Internal.conn_config(conn)
+
+    case Charon.SessionStore.delete(session.id, session.user_id, :proto, config) do
+      :ok ->
+        :ok
+
+      {:error, error} ->
+        Logger.warning("Failed to delete token: #{inspect(error)}")
+        {:error, :unexpected_error}
+    end
   end
 
   @doc """
   Fetch and validate the progress token from the current request.
   """
-  @spec fetch_token(Conn.t()) :: {:ok, token()} | {:error, :invalid_authorization}
+  @spec fetch_token(Conn.t()) ::
+          {:ok, Charon.Models.Session.t()} | {:error, :invalid_authorization}
   def fetch_token(conn) do
     config = Internal.conn_config(conn)
 
     with ["Bearer " <> token] <- get_req_header(conn, "authorization"),
-         {:ok,
-          %{
-            "flow_key" => flow_key,
-            "user_identifier" => user_identifier,
-            "incomplete_stages" => incomplete_stages
-          }} <- config.token_factory_module.verify(token, config) do
-      {:ok,
-       %{
-         flow_key: String.to_existing_atom(flow_key),
-         user_identifier: user_identifier,
-         incomplete_stages: Enum.map(incomplete_stages, &String.to_existing_atom/1)
-       }}
+         {:ok, %{"session_id" => session_id, "user_id" => user_id}} <-
+           config.token_factory_module.verify(token, config),
+         session when is_struct(session, Charon.Models.Session) <-
+           Charon.SessionStore.get(session_id, user_id, :proto, config) do
+      {:ok, session}
     else
       _ -> {:error, :invalid_authorization}
     end
