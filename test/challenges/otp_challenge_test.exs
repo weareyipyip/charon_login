@@ -20,6 +20,8 @@ defmodule CharonLogin.PasswordChallengeTest do
 
     receive do
       {:otp, otp} -> otp
+    after
+      1_000 -> raise("Didn't receive one-time password.")
     end
   end
 
@@ -53,7 +55,7 @@ defmodule CharonLogin.PasswordChallengeTest do
       assert {:error, :invalid_otp} = OTP.execute(conn, opts, user)
     end
 
-    test "deletes otp after usage" , %{otp_opts: opts, user: user} do
+    test "deletes otp after usage", %{otp_opts: opts, user: user} do
       otp = get_otp(opts, user)
       conn = gen_conn(%{body_params: %{"otp" => otp}})
       assert {:ok, :complete} = OTP.execute(conn, opts, user)

@@ -6,7 +6,7 @@ defmodule CharonLogin.Challenges.Password do
 
       CharonLogin %{
         challenges: %{
-          challenge_name: {CharonLogin.Challenges.Password, %{validate: &MyValidator/2}}
+          challenge_name: {CharonLogin.Challenges.Password, %{validate: &my_validator/2}}
         }
       }
 

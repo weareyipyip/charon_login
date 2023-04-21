@@ -1,6 +1,25 @@
 defmodule CharonLogin.Challenges.OTP do
   @moduledoc """
-  OTP challenge
+  Generates and validates a 5-digit one-time password.
+  The client must implement a communication method (e.g. SMS, e-mail).
+
+  Charon config:
+
+      CharonLogin %{
+        challenges: %{
+          challenge_name: {CharonLogin.Challenges.OTP, %{send_otp: &my_sender/2}}
+        }
+      }
+
+  Genrating a password doesn't require any data in the JSON body.
+
+  Validation request JSON body:
+
+  ```json
+  {
+    "otp": 12345
+  }
+  ```
   """
 
   alias CharonLogin.Internal
