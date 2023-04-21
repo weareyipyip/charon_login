@@ -19,13 +19,14 @@ defmodule CharonLogin.Challenges.OTP do
 
     case Map.get(session.extra_payload, :generated_otp) do
       nil ->
-        {:error, :no_generated_password}
+        {:error, :no_generated_otp}
 
       otp ->
         if otp == password do
+          set_flow_payload(config, session, %{generated_otp: nil})
           {:ok, :complete}
         else
-          {:error, :invalid_password}
+          {:error, :invalid_otp}
         end
     end
   end
