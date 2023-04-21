@@ -1,4 +1,4 @@
-defmodule CharonLogin.PasswordChallengeTest do
+defmodule CharonLogin.OTPChallengeTest do
   use ExUnit.Case
   alias CharonLogin.Internal
   alias CharonLogin.Challenges.OTP
