@@ -4,14 +4,11 @@ defmodule CharonLogin.OTPChallengeTest do
   alias CharonLogin.Challenges.OTP
 
   @config CharonLogin.TestHelpers.get_config()
+  import CharonLogin.TestHelpers
 
   defp gen_conn(fields) do
     struct(Plug.Conn, fields)
     |> Internal.put_conn_config(@config)
-  end
-
-  defp gen_send_otp() do
-    fn otp, _user -> send(self(), {:otp, otp}) end
   end
 
   defp get_otp(opts, user) do
@@ -40,7 +37,7 @@ defmodule CharonLogin.OTPChallengeTest do
     test "generates and validates a one-time password", %{otp_opts: opts, user: user} do
       otp = get_otp(opts, user)
       conn = gen_conn(%{body_params: %{"otp" => otp}})
-      assert {:ok, :complete} = OTP.execute(conn, opts, user)
+      assert {:ok, :completed} = OTP.execute(conn, opts, user)
     end
 
     test "errors on validation before generation of otp", %{user: user} do
@@ -58,7 +55,7 @@ defmodule CharonLogin.OTPChallengeTest do
     test "deletes otp after usage", %{otp_opts: opts, user: user} do
       otp = get_otp(opts, user)
       conn = gen_conn(%{body_params: %{"otp" => otp}})
-      assert {:ok, :complete} = OTP.execute(conn, opts, user)
+      assert {:ok, :completed} = OTP.execute(conn, opts, user)
       assert {:error, :no_generated_otp} = OTP.execute(conn, nil, user)
     end
   end

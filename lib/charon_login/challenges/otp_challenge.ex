@@ -22,6 +22,8 @@ defmodule CharonLogin.Challenges.OTP do
   ```
   """
 
+  Code.ensure_loaded(:binary)
+
   alias CharonLogin.Internal
 
   import CharonLogin.Internal.Handlers.Helpers
@@ -43,7 +45,7 @@ defmodule CharonLogin.Challenges.OTP do
       otp ->
         if otp == password do
           set_flow_payload(config, session, %{generated_otp: nil})
-          {:ok, :complete}
+          {:ok, :completed}
         else
           {:error, :invalid_otp}
         end
@@ -71,6 +73,6 @@ defmodule CharonLogin.Challenges.OTP do
   defp random_digits() do
     :crypto.strong_rand_bytes(3)
     |> :binary.decode_unsigned()
-    |> rem(10 ** 5)
+    |> rem(100_000)
   end
 end
