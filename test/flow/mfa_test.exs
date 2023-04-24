@@ -56,11 +56,12 @@ defmodule MfaTest do
                  new_config
                )
 
-      otp = receive do
-        {:otp, otp} -> otp
-      after
-        1_000 -> raise("Didn't receive one-time password.")
-      end
+      otp =
+        receive do
+          {:otp, otp} -> otp
+        after
+          1_000 -> raise("Didn't receive one-time password.")
+        end
 
       assert %{"result" => "completed"} =
                post_conn(
