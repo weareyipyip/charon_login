@@ -38,34 +38,7 @@ defmodule MfaTest do
                  token
                )
 
-      assert %{"challenge" => "complete"} = post_conn("/complete", %{}, token)
-    end
-
-    test "skip challenges" do
-      user_id = Charon.Internal.Crypto.random_url_encoded(16)
-
-      assert %{
-               "stages" => [%{"key" => "password_stage"}],
-               "token" => token
-             } = post_conn("/flows/skippable/start", %{"user_identifier" => user_id})
-
-      assert %{"result" => "completed"} =
-               post_conn(
-                 "/stages/password_stage/challenges/password/execute",
-                 %{"password" => "admin", "skip_next_time" => true},
-                 token
-               )
-
-      assert [skip_token] =
-               conn(:post, "/complete")
-               |> put_req_header("authorization", "Bearer #{token}")
-               |> CharonLogin.Endpoint.call(config: @config)
-               |> Plug.Conn.get_resp_header("x-skip-token")
-
-      conn(:post, "/flows/skippable/start", %{"user_identifier" => user_id})
-      |> put_req_header("authorization", "Bearer ")
-      |> put_req_header("x-skip-token", skip_token)
-      |> CharonLogin.Endpoint.call(config: @config)
+      assert %{"flow" => "complete"} = post_conn("/complete", %{}, token)
     end
 
     test "error on invalid url" do
@@ -121,15 +94,141 @@ defmodule MfaTest do
 
       assert %{"error" => "incomplete_stages"} = post_conn("/complete", %{}, token)
     end
+  end
 
+  describe "empty flow" do
     test "error when trying to complete flow more than once" do
       user_id = Charon.Internal.Crypto.random_url_encoded(16)
 
       assert %{"token" => token} =
                post_conn("/flows/no_op/start", %{"user_identifier" => user_id})
 
-      assert %{"challenge" => "complete"} = post_conn("/complete", %{}, token)
+      assert %{"flow" => "complete"} = post_conn("/complete", %{}, token)
       assert %{"error" => "invalid_authorization"} = post_conn("/complete", %{}, token)
+    end
+  end
+
+  describe "skippable flow" do
+    test "allows user to skip challenges after completing flow" do
+      user_id = Charon.Internal.Crypto.random_url_encoded(16)
+
+      assert %{
+               "stages" => [%{"key" => "password_stage"}],
+               "token" => token
+             } = post_conn("/flows/skippable/start", %{"user_identifier" => user_id})
+
+      assert %{"result" => "completed"} =
+               post_conn(
+                 "/stages/password_stage/challenges/password/execute",
+                 %{"password" => "admin", "skip_next_time" => true},
+                 token
+               )
+
+      assert [skip_token] =
+               conn(:post, "/complete")
+               |> put_req_header("authorization", "Bearer #{token}")
+               |> CharonLogin.Endpoint.call(config: @config)
+               |> Plug.Conn.get_resp_header("x-skip-token")
+
+      assert %{"token" => token, "stages" => []} =
+               conn(:post, "/flows/skippable/start", %{"user_identifier" => user_id})
+               |> put_req_header("x-skip-token", skip_token)
+               |> CharonLogin.Endpoint.call(config: @config)
+               |> Map.get(:resp_body)
+               |> Jason.decode!()
+
+      assert %{"flow" => "complete"} = post_conn("/complete", %{}, token)
+    end
+
+    test "can't skip unskippable stages" do
+      user_id = Charon.Internal.Crypto.random_url_encoded(16)
+
+      assert %{
+               "stages" => [%{"key" => "password_stage"}],
+               "token" => token
+             } = post_conn("/flows/unskippable/start", %{"user_identifier" => user_id})
+
+      assert %{"result" => "completed"} =
+               post_conn(
+                 "/stages/password_stage/challenges/password/execute",
+                 %{"password" => "admin", "skip_next_time" => true},
+                 token
+               )
+
+      assert [skip_token] =
+               conn(:post, "/complete")
+               |> put_req_header("authorization", "Bearer #{token}")
+               |> CharonLogin.Endpoint.call(config: @config)
+               |> Plug.Conn.get_resp_header("x-skip-token")
+
+      assert %{"token" => token, "stages" => [%{"key" => "password_stage"}]} =
+               conn(:post, "/flows/unskippable/start", %{"user_identifier" => user_id})
+               |> put_req_header("x-skip-token", skip_token)
+               |> CharonLogin.Endpoint.call(config: @config)
+               |> Map.get(:resp_body)
+               |> Jason.decode!()
+
+      assert %{"error" => "incomplete_stages"} = post_conn("/complete", %{}, token)
+    end
+
+    test "can't skip different flow" do
+      user_id = Charon.Internal.Crypto.random_url_encoded(16)
+
+      assert %{
+               "stages" => [%{"key" => "password_stage"}],
+               "token" => token
+             } = post_conn("/flows/skippable/start", %{"user_identifier" => user_id})
+
+      assert %{"result" => "completed"} =
+               post_conn(
+                 "/stages/password_stage/challenges/password/execute",
+                 %{"password" => "admin", "skip_next_time" => true},
+                 token
+               )
+
+      assert [skip_token] =
+               conn(:post, "/complete")
+               |> put_req_header("authorization", "Bearer #{token}")
+               |> CharonLogin.Endpoint.call(config: @config)
+               |> Plug.Conn.get_resp_header("x-skip-token")
+
+      assert %{"token" => _token, "stages" => [%{"key" => "password_stage"}]} =
+               conn(:post, "/flows/other_skippable/start", %{"user_identifier" => user_id})
+               |> put_req_header("x-skip-token", skip_token)
+               |> CharonLogin.Endpoint.call(config: @config)
+               |> Map.get(:resp_body)
+               |> Jason.decode!()
+    end
+
+    test "can't skip as a different user" do
+      user_id = Charon.Internal.Crypto.random_url_encoded(16)
+
+      assert %{
+               "stages" => [%{"key" => "password_stage"}],
+               "token" => token
+             } = post_conn("/flows/skippable/start", %{"user_identifier" => user_id})
+
+      assert %{"result" => "completed"} =
+               post_conn(
+                 "/stages/password_stage/challenges/password/execute",
+                 %{"password" => "admin", "skip_next_time" => true},
+                 token
+               )
+
+      assert [skip_token] =
+               conn(:post, "/complete")
+               |> put_req_header("authorization", "Bearer #{token}")
+               |> CharonLogin.Endpoint.call(config: @config)
+               |> Plug.Conn.get_resp_header("x-skip-token")
+
+      assert %{"token" => _token, "stages" => [%{"key" => "password_stage"}]} =
+               conn(:post, "/flows/skippable/start", %{
+                 "user_identifier" => Charon.Internal.Crypto.random_url_encoded(16)
+               })
+               |> put_req_header("x-skip-token", skip_token)
+               |> CharonLogin.Endpoint.call(config: @config)
+               |> Map.get(:resp_body)
+               |> Jason.decode!()
     end
   end
 end

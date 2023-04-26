@@ -18,13 +18,11 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
   def handle(conn, flow_key) do
     module_config = Internal.conn_module_config(conn)
 
-    stage_keys =
-      Map.get(module_config.flows, flow_key)
-      |> get_stage_keys(conn)
-
     with user_identifier when not is_nil(user_identifier) <-
            Map.get(conn.body_params, "user_identifier"),
          {:ok, user} <- fetch_user_by_id(module_config, user_identifier),
+         stage_keys <-
+           get_stage_keys(Map.get(module_config.flows, flow_key), conn, flow_key, user_identifier),
          {:ok, token} <-
            create_token(conn, %{
              flow_key: flow_key,
@@ -51,30 +49,28 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
     end
   end
 
-  # TODO: verify whether token is for current user and flow!
-  defp get_stage_keys(stages, conn) do
-    case Conn.get_req_header(conn, "x-skip-token") do
-      [token] ->
-        config = Internal.conn_config(conn)
+  defp get_stage_keys(stages, conn, flow_key_raw, user_id) do
+    config = Internal.conn_config(conn)
+    flow_key = Atom.to_string(flow_key_raw)
 
-        {:ok, %{"skipped_stages" => skipped_stages}} =
-          config.token_factory_module.verify(token, config)
-
-        Enum.flat_map(stages, fn raw_stage ->
-          case raw_stage do
-            {stage, [skippable: true]} ->
-              if Enum.member?(skipped_stages, stage |> Atom.to_string()) do
-                []
-              else
-                [stage]
-              end
-
-            stage ->
+    with [token] <- Conn.get_req_header(conn, "x-skip-token"),
+         {:ok,
+          %{"skipped_stages" => skipped_stages, "user_id" => ^user_id, "flow_key" => ^flow_key}} <-
+           config.token_factory_module.verify(token, config) do
+      Enum.flat_map(stages, fn raw_stage ->
+        case raw_stage do
+          {stage, [skippable: true]} ->
+            if Enum.member?(skipped_stages, stage |> Atom.to_string()) do
+              []
+            else
               [stage]
-          end
-        end)
-        |> IO.inspect()
+            end
 
+          stage ->
+            [stage]
+        end
+      end)
+    else
       _ ->
         Enum.map(stages, fn stage ->
           case stage do

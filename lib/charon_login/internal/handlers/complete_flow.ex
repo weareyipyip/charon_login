@@ -39,13 +39,11 @@ defmodule CharonLogin.Internal.Handlers.CompleteFlow do
          config,
          %{
            user_id: user_id,
-           id: session_id,
            extra_payload: %{skipped_stages: skipped_stages, flow_key: flow_key}
          } = _session
        ) do
     {:ok, token} =
       %{
-        "session_id" => session_id,
         "user_id" => user_id,
         "skipped_stages" => skipped_stages,
         "flow_key" => flow_key
