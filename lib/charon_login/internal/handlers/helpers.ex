@@ -8,6 +8,8 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
 
   @type token :: %{flow_key: atom(), user_identifier: String.t(), incomplete_stages: [atom()]}
 
+  def create_
+
   @doc """
   Create a new progress token.
   """

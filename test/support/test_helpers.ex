@@ -41,6 +41,7 @@ defmodule CharonLogin.TestHelpers do
           },
           flows: %{
             mfa: [:password_stage, :totp_stage],
+            skippable: [{:password_stage, skippable: true}],
             no_op: []
           },
           success_callback: &__MODULE__.succes_callback/3,

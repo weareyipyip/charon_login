@@ -18,6 +18,7 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
   def handle(conn, flow_key) do
     module_config = Internal.conn_module_config(conn)
     stage_keys = Map.get(module_config.flows, flow_key)
+      |> get_stage_keys(conn)
 
     with user_identifier when not is_nil(user_identifier) <-
            Map.get(conn.body_params, "user_identifier"),
@@ -46,6 +47,18 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
       {:error, reason} -> send_json(conn, %{error: reason}, 400)
       nil -> send_json(conn, %{error: :invalid_user}, 400)
     end
+  end
+
+  # TODO: check for charon token of skippable stages
+  defp get_stage_keys(stages, _conn) do
+    Enum.flat_map(stages, fn stage ->
+      case stage do
+        # is pattern matching the right way to go?
+        {stage, [skippable: value]} ->
+          [stage]
+        stage -> [stage]
+      end
+    end)
   end
 
   defp fetch_user_by_id(module_config, user_id) do

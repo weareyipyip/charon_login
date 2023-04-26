@@ -12,8 +12,8 @@ defmodule MfaTest do
     Jason.decode!(resp_body)
   end
 
-  describe "Succesfully walk through a 2FA flow" do
-    test "happy path through whole 2FA" do
+  describe "2FA flow" do
+    test "happy path through whole flow" do
       user_id = Charon.Internal.Crypto.random_url_encoded(16)
 
       assert %{
@@ -35,6 +35,24 @@ defmodule MfaTest do
                post_conn(
                  "/stages/totp_stage/challenges/totp/execute",
                  %{"otp" => totp_code},
+                 token
+               )
+
+      assert %{"challenge" => "complete"} = post_conn("/complete", %{}, token)
+    end
+
+    test "skip challenges" do
+      user_id = Charon.Internal.Crypto.random_url_encoded(16)
+
+      assert %{
+               "stages" => [%{"key" => "password_stage"}],
+               "token" => token
+             } = post_conn("/flows/skippable/start", %{"user_identifier" => user_id})
+
+      assert %{"result" => "completed"} =
+               post_conn(
+                 "/stages/password_stage/challenges/password/execute",
+                 %{"password" => "admin", "skip_next_time" => true},
                  token
                )
 

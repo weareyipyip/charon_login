@@ -25,8 +25,17 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
       case challenge.execute(conn, opts, user) do
         {:ok, :completed} ->
           incomplete_stages = complete_current_stage(session_payload.incomplete_stages)
+          token_updates =
+          case Map.get(conn, :body_params) do
+            # TODO: check if actually a skippable stage
+            %{"skip_next_time" => true} -> 
+              skipped_stages = Map.get(session_payload, :skipped_stages, [])
+              %{skipped_stages: [challenge_key | skipped_stages]}
 
-          case update_token(conn, session, %{incomplete_stages: incomplete_stages}) do
+            _ -> %{}
+          end |> Map.put(:incomplete_stages, incomplete_stages)
+
+          case update_token(conn, session, token_updates) do
             :ok -> send_json(conn, %{result: :completed})
             {:error, error} -> send_json(conn, %{error: error}, 400)
           end

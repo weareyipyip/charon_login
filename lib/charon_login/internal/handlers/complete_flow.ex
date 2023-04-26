@@ -14,10 +14,17 @@ defmodule CharonLogin.Internal.Handlers.CompleteFlow do
   @spec handle(Conn.t()) :: Conn.t()
   def handle(conn) do
     module_config = Internal.conn_module_config(conn)
+    config = Internal.conn_config(conn)
 
     with {:ok, %{extra_payload: session_payload} = session} <- fetch_token(conn),
          {:ok, :all_stages_completed} <- check_stages(session_payload.incomplete_stages),
          :ok <- delete_token(conn, session) do
+      token = case session_payload do
+        %{skipped_stages: skipped_stages} -> config.token_factory_module.sign(
+           %{skipped_stages: skipped_stages}, config 
+          )
+        _ -> nil
+      end |> IO.inspect()
       module_config.success_callback.(
         conn,
         session_payload.flow_key,
