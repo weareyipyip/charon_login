@@ -17,7 +17,9 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
   @spec handle(Conn.t(), atom()) :: Conn.t()
   def handle(conn, flow_key) do
     module_config = Internal.conn_module_config(conn)
-    stage_keys = Map.get(module_config.flows, flow_key)
+
+    stage_keys =
+      Map.get(module_config.flows, flow_key)
       |> get_stage_keys(conn)
 
     with user_identifier when not is_nil(user_identifier) <-
@@ -49,16 +51,41 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
     end
   end
 
-  # TODO: check for charon token of skippable stages
-  defp get_stage_keys(stages, _conn) do
-    Enum.flat_map(stages, fn stage ->
-      case stage do
-        # is pattern matching the right way to go?
-        {stage, [skippable: value]} ->
-          [stage]
-        stage -> [stage]
-      end
-    end)
+  # TODO: verify whether token is for current user and flow!
+  defp get_stage_keys(stages, conn) do
+    case Conn.get_req_header(conn, "x-skip-token") do
+      [token] ->
+        config = Internal.conn_config(conn)
+
+        {:ok, %{"skipped_stages" => skipped_stages}} =
+          config.token_factory_module.verify(token, config)
+
+        Enum.flat_map(stages, fn raw_stage ->
+          case raw_stage do
+            {stage, [skippable: true]} ->
+              if Enum.member?(skipped_stages, stage |> Atom.to_string()) do
+                []
+              else
+                [stage]
+              end
+
+            stage ->
+              [stage]
+          end
+        end)
+        |> IO.inspect()
+
+      _ ->
+        Enum.map(stages, fn stage ->
+          case stage do
+            {stage, _} ->
+              stage
+
+            stage ->
+              stage
+          end
+        end)
+    end
   end
 
   defp fetch_user_by_id(module_config, user_id) do

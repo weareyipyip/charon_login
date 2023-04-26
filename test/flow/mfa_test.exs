@@ -56,14 +56,23 @@ defmodule MfaTest do
                  token
                )
 
-      assert %{"challenge" => "complete"} = post_conn("/complete", %{}, token)
+      assert [skip_token] =
+               conn(:post, "/complete")
+               |> put_req_header("authorization", "Bearer #{token}")
+               |> CharonLogin.Endpoint.call(config: @config)
+               |> Plug.Conn.get_resp_header("x-skip-token")
+
+      conn(:post, "/flows/skippable/start", %{"user_identifier" => user_id})
+      |> put_req_header("authorization", "Bearer ")
+      |> put_req_header("x-skip-token", skip_token)
+      |> CharonLogin.Endpoint.call(config: @config)
     end
 
     test "error on invalid url" do
       assert %{"error" => "not_found"} = post_conn("/atlantis")
     end
 
-    test "error when starting non-existant flow" do
+    test "error when starting non-existent flow" do
       assert %{"error" => "flow_not_found"} = post_conn("/flows/styx/start")
     end
 
