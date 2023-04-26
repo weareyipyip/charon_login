@@ -28,7 +28,6 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
 
           token_updates =
             case Map.get(conn, :body_params) do
-              # TODO: check if actually a skippable stage
               %{"skip_next_time" => true} ->
                 skipped_stages = Map.get(session_payload, :skipped_stages, [])
                 %{skipped_stages: [stage_key | skipped_stages]}
