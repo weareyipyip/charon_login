@@ -57,31 +57,27 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
          {:ok,
           %{"skipped_stages" => skipped_stages, "user_id" => ^user_id, "flow_key" => ^flow_key}} <-
            config.token_factory_module.verify(token, config) do
-      Enum.flat_map(stages, fn raw_stage ->
-        case raw_stage do
-          {stage, [skippable: true]} ->
-            if Enum.member?(skipped_stages, stage |> Atom.to_string()) do
-              []
-            else
-              [stage]
-            end
-
-          stage ->
-            [stage]
-        end
-      end)
+      filter_skipped_stages(stages, skipped_stages)
     else
       _ ->
-        Enum.map(stages, fn stage ->
-          case stage do
-            {stage, _} ->
-              stage
-
-            stage ->
-              stage
-          end
-        end)
+        filter_skipped_stages(stages, [])
     end
+  end
+
+  defp filter_skipped_stages(stages, skipped_stages) do
+    Enum.flat_map(stages, fn raw_stage ->
+      case raw_stage do
+        {stage, [skippable: true]} ->
+          if Enum.member?(skipped_stages, stage |> Atom.to_string()) do
+            []
+          else
+            [stage]
+          end
+
+        stage ->
+          [stage]
+      end
+    end)
   end
 
   defp fetch_user_by_id(module_config, user_id) do
