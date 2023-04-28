@@ -4,14 +4,10 @@ defmodule MfaTest do
   @config CharonLogin.TestHelpers.get_config()
 
   defp post_conn(path, body \\ %{}, token \\ "") do
-    IO.puts("\n#{path}")
-    IO.inspect(body)
     %{resp_body: resp_body} =
       conn(:post, path, body)
       |> put_req_header("authorization", "Bearer #{token}")
       |> CharonLogin.Endpoint.call(config: @config)
-
-    IO.inspect(resp_body)
 
     Jason.decode!(resp_body)
   end
