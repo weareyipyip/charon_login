@@ -12,20 +12,6 @@ Modular authentication procedures.
     - [Moving Parts](#moving-parts)
     - [Configuration](#configuration)
     - [Client Requests](#client-requests)
-    
-- docs
-  - flow & challenges
-  - configuration
-  - client requests
-  - example
-    - flowchart
-    - config
-    - walkthrough
-
-how to integrate example?
-  - all explanations, then example usage
-  - explanation -> example for each subject
-  - example explanation + flowchart -> implementations
 
 ## Installation
 
