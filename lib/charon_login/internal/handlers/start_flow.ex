@@ -17,11 +17,12 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
   @spec handle(Conn.t(), atom()) :: Conn.t()
   def handle(conn, flow_key) do
     module_config = Internal.conn_module_config(conn)
-    stage_keys = Map.get(module_config.flows, flow_key)
 
     with user_identifier when not is_nil(user_identifier) <-
            Map.get(conn.body_params, "user_identifier"),
          {:ok, user} <- fetch_user_by_id(module_config, user_identifier),
+         stage_keys <-
+           get_stage_keys(Map.get(module_config.flows, flow_key), conn, flow_key, user_identifier),
          {:ok, token} <-
            create_token(conn, %{
              flow_key: flow_key,
@@ -46,6 +47,37 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
       {:error, reason} -> send_json(conn, %{error: reason}, 400)
       nil -> send_json(conn, %{error: :invalid_user}, 400)
     end
+  end
+
+  defp get_stage_keys(stages, conn, flow_key_raw, user_id) do
+    config = Internal.conn_config(conn)
+    flow_key = Atom.to_string(flow_key_raw)
+
+    with [token] <- Conn.get_req_header(conn, "x-skip-token"),
+         {:ok,
+          %{"skipped_stages" => skipped_stages, "user_id" => ^user_id, "flow_key" => ^flow_key}} <-
+           config.token_factory_module.verify(token, config) do
+      filter_skipped_stages(stages, skipped_stages)
+    else
+      _ ->
+        filter_skipped_stages(stages, [])
+    end
+  end
+
+  defp filter_skipped_stages(stages, skipped_stages) do
+    Enum.flat_map(stages, fn raw_stage ->
+      case raw_stage do
+        {stage, [skippable: true]} ->
+          if Enum.member?(skipped_stages, stage |> Atom.to_string()) do
+            []
+          else
+            [stage]
+          end
+
+        stage ->
+          [stage]
+      end
+    end)
   end
 
   defp fetch_user_by_id(module_config, user_id) do

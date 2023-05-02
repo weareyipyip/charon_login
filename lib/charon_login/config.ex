@@ -16,7 +16,7 @@ defmodule CharonLogin.Config do
               stage_b: [:totp, :email_code]
             },
             flows: %{
-              login: [:stage_a, :stage_b]
+              login: [:stage_a, {:stage_b, skippable: true}]
             },
             success_callback: &MyApp.CharonLogin.login_successful/3
           }
@@ -33,6 +33,7 @@ defmodule CharonLogin.Config do
   - `:flows` (required) Map of flows.
     - `key` (required) Can be used to reference the flow from the client.
     - `value` (required) List of required stages in the flow.
+      - `:skippable` (optional) Whether the stage is skippable or not.
   - `:success_callback` (required) Called with the flow name and user identifier when a flow has been completed successfully.
   - `:fetch_user` (required) Called with the user identifier to fetch user information.
   """

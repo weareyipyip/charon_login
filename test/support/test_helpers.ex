@@ -17,7 +17,7 @@ defmodule CharonLogin.TestHelpers do
     end
   end
 
-  def succes_callback(conn, _, _), do: %{conn | resp_body: "{\"challenge\": \"complete\"}"}
+  def succes_callback(conn, _, _), do: %{conn | resp_body: "{\"flow\": \"complete\"}"}
 
   def validate_password(pass, user_pass) do
     :crypto.hash(:md5, pass) == user_pass
@@ -50,6 +50,9 @@ defmodule CharonLogin.TestHelpers do
           },
           flows: %{
             mfa: [:password_stage, :totp_stage, :otp_stage],
+            skippable: [{:password_stage, skippable: true}],
+            other_skippable: [{:password_stage, skippable: true}],
+            unskippable: [:password_stage],
             no_op: []
           },
           success_callback: &__MODULE__.succes_callback/3,
