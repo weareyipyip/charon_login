@@ -3,11 +3,11 @@ defmodule MfaTest do
 
   @config CharonLogin.TestHelpers.get_config()
 
-  defp post_conn(path, body \\ %{}, token \\ "") do
+  defp post_conn(path, body \\ %{}, token \\ "", config \\ @config) do
     %{resp_body: resp_body} =
       conn(:post, path, body)
       |> put_req_header("authorization", "Bearer #{token}")
-      |> CharonLogin.Endpoint.call(config: @config)
+      |> CharonLogin.Endpoint.call(config: config)
 
     Jason.decode!(resp_body)
   end
@@ -17,7 +17,11 @@ defmodule MfaTest do
       user_id = Charon.Internal.Crypto.random_url_encoded(16)
 
       assert %{
-               "stages" => [%{"key" => "password_stage"}, %{"key" => "totp_stage"}],
+               "stages" => [
+                 %{"key" => "password_stage"},
+                 %{"key" => "totp_stage"},
+                 %{"key" => "otp_stage"}
+               ],
                "token" => token
              } = post_conn("/flows/mfa/start", %{"user_identifier" => user_id})
 
@@ -36,6 +40,35 @@ defmodule MfaTest do
                  "/stages/totp_stage/challenges/totp/execute",
                  %{"otp" => totp_code},
                  token
+               )
+
+      new_challenges =
+        CharonLogin.TestHelpers.get_challenges()
+        |> Map.put(:otp, {CharonLogin.Challenges.OTP, %{send_otp: gen_send_otp()}})
+
+      new_config = CharonLogin.TestHelpers.get_config(new_challenges)
+
+      assert %{"result" => "continue"} =
+               post_conn(
+                 "/stages/otp_stage/challenges/otp/execute",
+                 %{},
+                 token,
+                 new_config
+               )
+
+      otp =
+        receive do
+          {:otp, otp} -> otp
+        after
+          1_000 -> raise("Didn't receive one-time password.")
+        end
+
+      assert %{"result" => "completed"} =
+               post_conn(
+                 "/stages/otp_stage/challenges/otp/execute",
+                 %{"otp" => otp},
+                 token,
+                 new_config
                )
 
       assert %{"flow" => "complete"} = post_conn("/complete", %{}, token)
@@ -88,7 +121,11 @@ defmodule MfaTest do
       user_id = Charon.Internal.Crypto.random_url_encoded(16)
 
       assert %{
-               "stages" => [%{"key" => "password_stage"}, %{"key" => "totp_stage"}],
+               "stages" => [
+                 %{"key" => "password_stage"},
+                 %{"key" => "totp_stage"},
+                 %{"key" => "otp_stage"}
+               ],
                "token" => token
              } = post_conn("/flows/mfa/start", %{"user_identifier" => user_id})
 

@@ -23,24 +23,33 @@ defmodule CharonLogin.TestHelpers do
     :crypto.hash(:md5, pass) == user_pass
   end
 
-  def get_config() do
+  def gen_send_otp() do
+    fn otp, _user -> send(self(), {:otp, otp}) end
+  end
+
+  def get_challenges() do
+    %{
+      password: {CharonLogin.Challenges.Password, %{validate: &__MODULE__.validate_password/2}},
+      totp: {CharonLogin.Challenges.TOTP, %{}},
+      otp: {CharonLogin.Challenges.OTP, %{}}
+    }
+  end
+
+  def get_config(challenges \\ get_challenges()) do
     [
       token_issuer: "Charon",
       get_base_secret: &__MODULE__.get_base_secret/0,
       session_store_module: Charon.SessionStore.LocalStore,
       optional_modules: %{
         CharonLogin => %{
-          challenges: %{
-            password:
-              {CharonLogin.Challenges.Password, %{validate: &__MODULE__.validate_password/2}},
-            totp: {CharonLogin.Challenges.TOTP, %{}}
-          },
+          challenges: challenges,
           stages: %{
             password_stage: [:password],
-            totp_stage: [:totp]
+            totp_stage: [:totp],
+            otp_stage: [:otp]
           },
           flows: %{
-            mfa: [:password_stage, :totp_stage],
+            mfa: [:password_stage, :totp_stage, :otp_stage],
             skippable: [{:password_stage, skippable: true}],
             other_skippable: [{:password_stage, skippable: true}],
             unskippable: [:password_stage],
