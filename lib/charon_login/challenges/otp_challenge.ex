@@ -53,7 +53,7 @@ defmodule CharonLogin.Challenges.OTP do
   end
 
   def execute(%Plug.Conn{} = conn, %{send_otp: send_otp} = _opts, %{id: user_id} = user) do
-    otp = random_digits()
+    otp = Charon.Internal.Crypto.strong_random_digits(5)
 
     config = Internal.conn_config(conn)
     session = get_flow_payload(config, user_id)
@@ -69,10 +69,4 @@ defmodule CharonLogin.Challenges.OTP do
   end
 
   def execute(_, _, _), do: {:error, :invalid_args}
-
-  defp random_digits() do
-    :crypto.strong_rand_bytes(3)
-    |> :binary.decode_unsigned()
-    |> rem(100_000)
-  end
 end
