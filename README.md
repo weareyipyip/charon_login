@@ -144,12 +144,12 @@ Response body
 {
   "stages": [
     {
-      "key": "password_stage",
+      "key": "stage_password",
       "challenges": [
         {"key": "password", "type": "password"}
     ]},
     {
-      "key": "otp_stage",
+      "key": "stage_otp",
       "challenges": [
         {"key": "sms", "type": "otp"},
         {"key": "totp", "type": "totp"}
@@ -230,10 +230,7 @@ x-skip-token = ZYXabc
 
 _Validate that all stages have been cleared. Authenticate user._
 
-Request body
-```json
-{ "token": "abc123" }
-```
+Empty request body
 
 Request headers
 ```
@@ -265,7 +262,7 @@ Response body
 {
   "stages": [
     {
-      "key": "password_stage",
+      "key": "stage_password",
       "challenges": [
         {"key": "password", "type": "password"}
     ]}
