@@ -54,9 +54,10 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
   end
 
   defp check_stage(incomplete_stages, stage_key) do
-    if hd(incomplete_stages) == stage_key,
-      do: {:ok, :is_current_stage},
-      else: {:error, :is_not_current_stage}
+    case incomplete_stages do
+      [^stage_key | _] -> {:ok, :is_current_stage}
+      _ -> {:error, :is_not_current_stage}
+    end
   end
 
   defp check_challenge(available_challenges, challenge_key) do
