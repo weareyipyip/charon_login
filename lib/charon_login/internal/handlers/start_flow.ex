@@ -30,7 +30,7 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
              incomplete_stages: stage_keys
            }) do
       stages =
-        Enum.map(stage_keys, fn stage_key ->
+        Enum.map(stage_keys, fn {stage_key, opts} ->
           challenge_keys = Map.get(module_config.stages, stage_key)
 
           challenges =
@@ -39,7 +39,11 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
               %{key: challenge_key, type: challenge.type()}
             end)
 
-          %{key: stage_key, challenges: challenges}
+          %{
+            key: stage_key,
+            skippable: Keyword.get(opts, :skippable, false),
+            challenges: challenges
+          }
         end)
 
       send_json(conn, %{stages: stages, enabled_challenges: user.enabled_challenges, token: token})
@@ -67,15 +71,15 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
   defp filter_skipped_stages(stages, skipped_stages) do
     Enum.flat_map(stages, fn raw_stage ->
       case raw_stage do
-        {stage, [skippable: true]} ->
-          if Enum.member?(skipped_stages, stage |> Atom.to_string()) do
+        {key, [skippable: true]} = stage ->
+          if Enum.member?(skipped_stages, key |> Atom.to_string()) do
             []
           else
             [stage]
           end
 
-        stage ->
-          [stage]
+        key ->
+          [{key, []}]
       end
     end)
   end

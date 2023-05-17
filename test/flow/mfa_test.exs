@@ -18,9 +18,9 @@ defmodule MfaTest do
 
       assert %{
                "stages" => [
-                 %{"key" => "password_stage"},
-                 %{"key" => "totp_stage"},
-                 %{"key" => "otp_stage"}
+                 %{"key" => "password_stage", "skippable" => false},
+                 %{"key" => "totp_stage", "skippable" => false},
+                 %{"key" => "otp_stage", "skippable" => false}
                ],
                "token" => token
              } = post_conn("/flows/mfa/start", %{"user_identifier" => user_id})
@@ -122,9 +122,9 @@ defmodule MfaTest do
 
       assert %{
                "stages" => [
-                 %{"key" => "password_stage"},
-                 %{"key" => "totp_stage"},
-                 %{"key" => "otp_stage"}
+                 %{"key" => "password_stage", "skippable" => false},
+                 %{"key" => "totp_stage", "skippable" => false},
+                 %{"key" => "otp_stage", "skippable" => false}
                ],
                "token" => token
              } = post_conn("/flows/mfa/start", %{"user_identifier" => user_id})
@@ -150,7 +150,7 @@ defmodule MfaTest do
       user_id = Charon.Internal.Crypto.random_url_encoded(16)
 
       assert %{
-               "stages" => [%{"key" => "password_stage"}],
+               "stages" => [%{"key" => "password_stage", "skippable" => true}],
                "token" => token
              } = post_conn("/flows/skippable/start", %{"user_identifier" => user_id})
 
