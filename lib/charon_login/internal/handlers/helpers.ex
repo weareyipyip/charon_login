@@ -93,9 +93,9 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Fetch and validate the progress token from the current request.
   """
-  @spec fetch_session(Conn.t()) ::
+  @spec get_session(Conn.t()) ::
           {:ok, Charon.Models.Session.t()} | {:error, :invalid_authorization}
-  def fetch_session(conn) do
+  def get_session(conn) do
     config = Internal.get_conn_config(conn)
 
     with ["Bearer " <> token] <- get_req_header(conn, "authorization"),

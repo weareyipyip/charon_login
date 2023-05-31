@@ -16,7 +16,7 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
     module_config = Internal.get_conn_module_config(conn)
     available_challenges = Map.get(module_config.stages, stage_key)
 
-    with {:ok, %{extra_payload: session_payload} = session} <- fetch_session(conn),
+    with {:ok, %{extra_payload: session_payload} = session} <- get_session(conn),
          {:ok, :is_current_stage} <- check_stage(session_payload.incomplete_stages, stage_key),
          {:ok, :is_valid_challenge} <- check_challenge(available_challenges, challenge_key) do
       {:ok, user} = module_config.fetch_user.(session_payload.user_identifier)
