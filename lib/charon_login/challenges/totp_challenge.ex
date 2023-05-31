@@ -36,7 +36,7 @@ if Code.ensure_loaded?(NimbleTOTP) do
           _opts,
           %{totp_secret: secret, id: user_id} = _user
         ) do
-      config = Internal.conn_config(conn)
+      config = Internal.get_conn_config(conn)
       now = Charon.Internal.now()
       session = get_user_state(config, user_id)
       since = Map.get(session.extra_payload, :totp_last_used, 0)

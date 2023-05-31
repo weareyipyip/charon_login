@@ -33,7 +33,7 @@ defmodule CharonLogin.Challenges.OTP do
 
   @impl true
   def execute(%Plug.Conn{body_params: %{"otp" => password}} = conn, _opts, %{id: user_id} = _user) do
-    config = Internal.conn_config(conn)
+    config = Internal.get_conn_config(conn)
     session = get_user_state(config, user_id)
 
     case Map.get(session.extra_payload, :generated_otp) do
@@ -52,7 +52,7 @@ defmodule CharonLogin.Challenges.OTP do
   def execute(%Plug.Conn{} = conn, %{send_otp: send_otp} = _opts, %{id: user_id} = user) do
     otp = Charon.Internal.Crypto.strong_random_digits(5)
 
-    config = Internal.conn_config(conn)
+    config = Internal.get_conn_config(conn)
     session = get_user_state(config, user_id)
 
     case set_user_state(config, session, %{generated_otp: otp}) do

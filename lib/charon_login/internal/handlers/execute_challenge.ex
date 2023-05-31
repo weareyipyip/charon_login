@@ -13,7 +13,7 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
   """
   @spec handle(Conn.t(), atom(), atom()) :: Conn.t()
   def handle(conn, stage_key, challenge_key) do
-    module_config = Internal.conn_module_config(conn)
+    module_config = Internal.get_conn_module_config(conn)
     available_challenges = Map.get(module_config.stages, stage_key)
 
     with {:ok, %{extra_payload: session_payload} = session} <- fetch_session(conn),

@@ -17,7 +17,7 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
         user_identifier: user_identifier,
         incomplete_stages: incomplete_stages
       }) do
-    config = Internal.conn_config(conn)
+    config = Internal.get_conn_config(conn)
 
     now = Charon.Internal.now()
     expiration = now + 60 * 15
@@ -59,7 +59,7 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @spec update_session(Conn.t(), Charon.Models.Session.t(), map()) ::
           :ok | {:error, :unexpected_error}
   def update_session(conn, session, updates) do
-    config = Internal.conn_config(conn)
+    config = Internal.get_conn_config(conn)
 
     case session
          |> Map.update(:extra_payload, %{}, &Map.merge(&1, updates))
@@ -78,7 +78,7 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   """
   @spec delete_session(Conn.t(), Charon.Models.Session.t()) :: :ok | {:error, :unexpected_error}
   def delete_session(conn, session) do
-    config = Internal.conn_config(conn)
+    config = Internal.get_conn_config(conn)
 
     case Charon.SessionStore.delete(session.id, session.user_id, :proto, config) do
       :ok ->
@@ -93,11 +93,10 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Fetch and validate the progress token from the current request.
   """
-  # TODO: get_session
   @spec fetch_session(Conn.t()) ::
           {:ok, Charon.Models.Session.t()} | {:error, :invalid_authorization}
   def fetch_session(conn) do
-    config = Internal.conn_config(conn)
+    config = Internal.get_conn_config(conn)
 
     with ["Bearer " <> token] <- get_req_header(conn, "authorization"),
          {:ok, %{"session_id" => session_id, "user_id" => user_id}} <-
