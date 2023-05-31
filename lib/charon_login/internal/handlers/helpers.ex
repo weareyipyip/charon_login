@@ -11,13 +11,13 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Create a new progress token.
   """
-  @spec create_token(Conn.t(), token()) :: {:ok, String.t()} | {:error, :unexpected_error}
-  def create_token(conn, %{
+  @spec create_session(Conn.t(), token()) :: {:ok, String.t()} | {:error, :unexpected_error}
+  def create_session(conn, %{
         flow_key: flow_key,
         user_identifier: user_identifier,
         incomplete_stages: incomplete_stages
       }) do
-    config = Internal.conn_config(conn)
+    config = Internal.get_conn_config(conn)
 
     now = Charon.Internal.now()
     expiration = now + 60 * 15
@@ -56,10 +56,10 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Update the progress token.
   """
-  @spec update_token(Conn.t(), Charon.Models.Session.t(), map()) ::
+  @spec update_session(Conn.t(), Charon.Models.Session.t(), map()) ::
           :ok | {:error, :unexpected_error}
-  def update_token(conn, session, updates) do
-    config = Internal.conn_config(conn)
+  def update_session(conn, session, updates) do
+    config = Internal.get_conn_config(conn)
 
     case session
          |> Map.update(:extra_payload, %{}, &Map.merge(&1, updates))
@@ -76,9 +76,9 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Delete the progress token.
   """
-  @spec delete_token(Conn.t(), Charon.Models.Session.t()) :: :ok | {:error, :unexpected_error}
-  def delete_token(conn, session) do
-    config = Internal.conn_config(conn)
+  @spec delete_session(Conn.t(), Charon.Models.Session.t()) :: :ok | {:error, :unexpected_error}
+  def delete_session(conn, session) do
+    config = Internal.get_conn_config(conn)
 
     case Charon.SessionStore.delete(session.id, session.user_id, :proto, config) do
       :ok ->
@@ -93,10 +93,10 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Fetch and validate the progress token from the current request.
   """
-  @spec fetch_token(Conn.t()) ::
+  @spec get_session(Conn.t()) ::
           {:ok, Charon.Models.Session.t()} | {:error, :invalid_authorization}
-  def fetch_token(conn) do
-    config = Internal.conn_config(conn)
+  def get_session(conn) do
+    config = Internal.get_conn_config(conn)
 
     with ["Bearer " <> token] <- get_req_header(conn, "authorization"),
          {:ok, %{"session_id" => session_id, "user_id" => user_id}} <-
@@ -112,9 +112,9 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Creates a proto-session for the current flow. Uses user_id for session.id.
   """
-  @spec set_flow_payload(Charon.Config.t(), Charon.Models.Session.t(), map()) ::
+  @spec set_user_state(Charon.Config.t(), Charon.Models.Session.t(), map()) ::
           :ok | {:error, :conflict | binary}
-  def set_flow_payload(config, session, extra_payload_updates \\ %{}) do
+  def set_user_state(config, session, extra_payload_updates \\ %{}) do
     now = Charon.Internal.now()
     expiration = now + 60 * 15
 
@@ -127,8 +127,8 @@ defmodule CharonLogin.Internal.Handlers.Helpers do
   @doc """
   Get the proto-session corresponding to the current flow.
   """
-  @spec get_flow_payload(Charon.Config.t(), binary()) :: Charon.Models.Session.t()
-  def get_flow_payload(config, user_id) do
+  @spec get_user_state(Charon.Config.t(), binary()) :: Charon.Models.Session.t()
+  def get_user_state(config, user_id) do
     case Charon.SessionStore.get(user_id, user_id, :proto, config) do
       nil ->
         now = Charon.Internal.now()

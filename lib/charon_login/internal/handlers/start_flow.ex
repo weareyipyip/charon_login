@@ -16,7 +16,7 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
   """
   @spec handle(Conn.t(), atom()) :: Conn.t()
   def handle(conn, flow_key) do
-    module_config = Internal.conn_module_config(conn)
+    module_config = Internal.get_conn_module_config(conn)
 
     with user_identifier when not is_nil(user_identifier) <-
            Map.get(conn.body_params, "user_identifier"),
@@ -24,7 +24,7 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
          stage_keys <-
            get_stage_keys(Map.get(module_config.flows, flow_key), conn, flow_key, user_identifier),
          {:ok, token} <-
-           create_token(conn, %{
+           create_session(conn, %{
              flow_key: flow_key,
              user_identifier: user_identifier,
              incomplete_stages: stage_keys
@@ -54,7 +54,7 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
   end
 
   defp get_stage_keys(stages, conn, flow_key_raw, user_id) do
-    config = Internal.conn_config(conn)
+    config = Internal.get_conn_config(conn)
     flow_key = Atom.to_string(flow_key_raw)
 
     with [token] <- Conn.get_req_header(conn, "x-skip-token"),

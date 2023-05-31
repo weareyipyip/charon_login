@@ -13,12 +13,12 @@ defmodule CharonLogin.Internal.Handlers.CompleteFlow do
   """
   @spec handle(Conn.t()) :: Conn.t()
   def handle(conn) do
-    module_config = Internal.conn_module_config(conn)
-    config = Internal.conn_config(conn)
+    module_config = Internal.get_conn_module_config(conn)
+    config = Internal.get_conn_config(conn)
 
-    with {:ok, %{extra_payload: session_payload} = session} <- fetch_token(conn),
+    with {:ok, %{extra_payload: session_payload} = session} <- get_session(conn),
          {:ok, :all_stages_completed} <- check_stages(session_payload.incomplete_stages),
-         :ok <- delete_token(conn, session) do
+         :ok <- delete_session(conn, session) do
       conn = maybe_put_skip_header(conn, config, session)
 
       module_config.success_callback.(
