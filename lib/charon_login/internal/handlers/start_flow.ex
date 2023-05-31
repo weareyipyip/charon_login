@@ -24,7 +24,7 @@ defmodule CharonLogin.Internal.Handlers.StartFlow do
          stage_keys <-
            get_stage_keys(Map.get(module_config.flows, flow_key), conn, flow_key, user_identifier),
          {:ok, token} <-
-           create_token(conn, %{
+           create_session(conn, %{
              flow_key: flow_key,
              user_identifier: user_identifier,
              incomplete_stages: stage_keys

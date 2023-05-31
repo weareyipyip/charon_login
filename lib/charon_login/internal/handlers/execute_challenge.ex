@@ -16,7 +16,7 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
     module_config = Internal.conn_module_config(conn)
     available_challenges = Map.get(module_config.stages, stage_key)
 
-    with {:ok, %{extra_payload: session_payload} = session} <- fetch_token(conn),
+    with {:ok, %{extra_payload: session_payload} = session} <- fetch_session(conn),
          {:ok, :is_current_stage} <- check_stage(session_payload.incomplete_stages, stage_key),
          {:ok, :is_valid_challenge} <- check_challenge(available_challenges, challenge_key) do
       {:ok, user} = module_config.fetch_user.(session_payload.user_identifier)
@@ -37,7 +37,7 @@ defmodule CharonLogin.Internal.Handlers.ExecuteChallenge do
             end
             |> Map.put(:incomplete_stages, incomplete_stages)
 
-          case update_token(conn, session, token_updates) do
+          case update_session(conn, session, token_updates) do
             :ok -> send_json(conn, %{result: :completed})
             {:error, error} -> send_json(conn, %{error: error}, 400)
           end

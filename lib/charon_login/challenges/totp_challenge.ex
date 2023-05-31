@@ -37,12 +37,12 @@ if Code.ensure_loaded?(NimbleTOTP) do
           %{totp_secret: secret, id: user_id} = _user
         ) do
       config = Internal.conn_config(conn)
-      now = Elixir.System.os_time(:second)
-      session = get_flow_payload(config, user_id)
+      now = Charon.Internal.now()
+      session = get_user_state(config, user_id)
       since = Map.get(session.extra_payload, :totp_last_used, 0)
 
       with {:ok, :valid} <- validate_totp(secret, password, now, since),
-           :ok <- set_flow_payload(config, session, %{totp_last_used: now}) do
+           :ok <- set_user_state(config, session, %{totp_last_used: now}) do
         {:ok, :completed}
       end
     end

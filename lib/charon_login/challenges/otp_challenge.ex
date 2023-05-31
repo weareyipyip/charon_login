@@ -22,8 +22,6 @@ defmodule CharonLogin.Challenges.OTP do
   ```
   """
 
-  Code.ensure_loaded(:binary)
-
   alias CharonLogin.Internal
 
   import CharonLogin.Internal.Handlers.Helpers
@@ -36,19 +34,18 @@ defmodule CharonLogin.Challenges.OTP do
   @impl true
   def execute(%Plug.Conn{body_params: %{"otp" => password}} = conn, _opts, %{id: user_id} = _user) do
     config = Internal.conn_config(conn)
-    session = get_flow_payload(config, user_id)
+    session = get_user_state(config, user_id)
 
     case Map.get(session.extra_payload, :generated_otp) do
       nil ->
         {:error, :no_generated_otp}
 
-      otp ->
-        if otp == password do
-          set_flow_payload(config, session, %{generated_otp: nil})
-          {:ok, :completed}
-        else
-          {:error, :invalid_otp}
-        end
+      ^password ->
+        set_user_state(config, session, %{generated_otp: nil})
+        {:ok, :completed}
+
+      _ ->
+        {:error, :invalid_otp}
     end
   end
 
@@ -56,9 +53,9 @@ defmodule CharonLogin.Challenges.OTP do
     otp = Charon.Internal.Crypto.strong_random_digits(5)
 
     config = Internal.conn_config(conn)
-    session = get_flow_payload(config, user_id)
+    session = get_user_state(config, user_id)
 
-    case set_flow_payload(config, session, %{generated_otp: otp}) do
+    case set_user_state(config, session, %{generated_otp: otp}) do
       :ok ->
         send_otp.(otp, user)
         {:ok, :continue}
