@@ -38,11 +38,11 @@ if Code.ensure_loaded?(NimbleTOTP) do
         ) do
       config = Internal.get_conn_config(conn)
       now = Charon.Internal.now()
-      session = get_user_state(config, user_id)
-      since = Map.get(session.extra_payload, :totp_last_used, 0)
+      user_state = get_user_state(config, user_id)
+      since = Map.get(user_state.extra_payload, :totp_last_used, 0)
 
       with {:ok, :valid} <- validate_totp(secret, password, now, since),
-           :ok <- set_user_state(config, session, %{totp_last_used: now}) do
+           :ok <- set_user_state(config, user_state, %{totp_last_used: now}) do
         {:ok, :completed}
       end
     end

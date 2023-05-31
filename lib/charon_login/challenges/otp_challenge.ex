@@ -34,14 +34,14 @@ defmodule CharonLogin.Challenges.OTP do
   @impl true
   def execute(%Plug.Conn{body_params: %{"otp" => password}} = conn, _opts, %{id: user_id} = _user) do
     config = Internal.get_conn_config(conn)
-    session = get_user_state(config, user_id)
+    user_state = get_user_state(config, user_id)
 
-    case Map.get(session.extra_payload, :generated_otp) do
+    case Map.get(user_state.extra_payload, :generated_otp) do
       nil ->
         {:error, :no_generated_otp}
 
       ^password ->
-        set_user_state(config, session, %{generated_otp: nil})
+        set_user_state(config, user_state, %{generated_otp: nil})
         {:ok, :completed}
 
       _ ->
@@ -53,9 +53,9 @@ defmodule CharonLogin.Challenges.OTP do
     otp = Charon.Internal.Crypto.strong_random_digits(5)
 
     config = Internal.get_conn_config(conn)
-    session = get_user_state(config, user_id)
+    user_state = get_user_state(config, user_id)
 
-    case set_user_state(config, session, %{generated_otp: otp}) do
+    case set_user_state(config, user_state, %{generated_otp: otp}) do
       :ok ->
         send_otp.(otp, user)
         {:ok, :continue}
