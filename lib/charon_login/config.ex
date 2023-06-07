@@ -18,7 +18,8 @@ defmodule CharonLogin.Config do
             flows: %{
               login: [:stage_a, {:stage_b, skippable: true}]
             },
-            success_callback: &MyApp.CharonLogin.login_successful/3
+            success_callback: &MyApp.CharonLogin.login_successful/3,
+            fetch_user: &MyApp.get_user/1
           }
         }
       )
