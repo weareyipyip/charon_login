@@ -7,9 +7,9 @@ defmodule CharonLogin.Config do
         optional_modules: %{
           CharonLogin => %{
             challenges: %{
-              password: {CharonLogin.Challenges.PasswordChallenge, %{&MyApp.verify_password/2},
-              totp: {CharonLogin.Challenges.TOTPChallenge, %{}},
-              email_code: {CharonLogin.Challenges.EmailCodeChallenge, %{MyApp.send_code/2}}
+              password: {CharonLogin.Challenges.Password, %{&MyApp.verify_password/2},
+              totp: {CharonLogin.Challenges.TOTP, %{}},
+              email_code: {CharonLogin.Challenges.OTP, %{MyApp.send_code/2}}
             },
             stages: %{
               stage_a: [:password],
