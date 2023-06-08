@@ -7,9 +7,9 @@ defmodule CharonLogin.Config do
         optional_modules: %{
           CharonLogin => %{
             challenges: %{
-              password: {CharonLogin.Challenges.PasswordChallenge, %{}},
-              totp: {CharonLogin.Challenges.TOTPChallenge, %{}},
-              email_code: {CharonLogin.Challenges.EmailCodeChallenge, %{}}
+              password: {CharonLogin.Challenges.Password, %{&MyApp.verify_password/2},
+              totp: {CharonLogin.Challenges.TOTP, %{}},
+              email_code: {CharonLogin.Challenges.OTP, %{MyApp.send_code/2}}
             },
             stages: %{
               stage_a: [:password],
@@ -18,7 +18,8 @@ defmodule CharonLogin.Config do
             flows: %{
               login: [:stage_a, {:stage_b, skippable: true}]
             },
-            success_callback: &MyApp.CharonLogin.login_successful/3
+            success_callback: &MyApp.CharonLogin.login_successful/3,
+            fetch_user: &MyApp.get_user/1
           }
         }
       )
